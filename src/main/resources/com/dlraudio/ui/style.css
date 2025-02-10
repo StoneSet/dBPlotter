@@ -1,0 +1,59 @@
+/* Style général des boutons */
+.button {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 8 12;
+    -fx-text-fill: black;
+    -fx-font-size: 12px;
+    -fx-border-color: #bbb;
+    -fx-border-width: 1;
+}
+
+/* Effet au survol */
+.button:hover {
+    -fx-background-color: #e0e0e0;
+    -fx-cursor: hand;
+}
+
+/* Bouton Import */
+.import-button {
+    -fx-background-color: #0078D4;
+    -fx-text-fill: white;
+}
+
+/* Bouton Envoyer */
+.send-button {
+    -fx-background-color: #34A853;
+    -fx-text-fill: white;
+}
+
+/* Bouton STOP */
+.stop-button {
+    -fx-background-color: #E81123;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Boutons de fonction */
+.function-button {
+    -fx-background-color: #F4F4F4;
+    -fx-text-fill: #333;
+}
+
+/* Menu principal */
+.menu-bar {
+    -fx-background-color: #f8f8f8;
+    -fx-border-color: #ccc;
+    -fx-border-width: 0 0 1px 0;
+}
+
+/* Titre des groupes */
+.label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444;
+}
+
+/* ProgressBar */
+.progress-bar {
+    -fx-accent: #0078D4;
+}

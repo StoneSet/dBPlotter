@@ -5,21 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd5c373c-1555-4f28-9ba5-9b3c43591c02" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/ArduinoCommandController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/CsvImporter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/com/dlraudio/ui/logo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/com/dlraudio/ui/main.fxml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/com/dlraudio/ui/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.mvn/jvm.config" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.mvn/maven.config" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/core/MainApp.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/csv/CSVReader.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/serial/SerialManager.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/ui/AppUI.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/dlraudio/AppTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/MainApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/MainApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/CalibrationController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/MainController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/MainController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/PaperControlController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/PaperControlController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/controller/SettingsController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/model/FrequencyData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/model/FrequencyData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/model/PlotParameters.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/model/PlotParameters.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/service/CalibrationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/service/CsvImportService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/service/PlottingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/service/PlottingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/service/SerialCommunicationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/DataParser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/FileUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/FileUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/SerialPortUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/dlraudio/dbplotter/util/SerialPortUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/module-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/dlraudio/dbplotter/AppUi.fxml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/com/dlraudio/dbplotter/style.css" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +38,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="CSS File" />
         <option value="Class" />
       </list>
     </option>
@@ -63,6 +73,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
+    "list.type.of.created.stylesheet": "CSS",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -75,9 +86,14 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.AppTest">
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\valder\Desktop\zz\dbPlotter\src\main\resources\com\dlraudio\ui" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.dbPlotter">
     <configuration name="dbPlotter" type="Application" factoryName="Application">
-      <option name="MAIN_CLASS_NAME" value="com.dlraudio.core.MainApp" />
+      <option name="MAIN_CLASS_NAME" value="com.dlraudio.dbplotter.MainApp" />
       <module name="dbPlotter" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -124,7 +140,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1739212798796</updated>
-      <workItem from="1739212799950" duration="2982000" />
+      <workItem from="1739212799950" duration="16159000" />
     </task>
     <servers />
   </component>

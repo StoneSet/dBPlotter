@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<?import java.lang.String?>
+<?import javafx.scene.image.ImageView?>
+<VBox fx:controller="com.dlraudio.dbplotter.controller.MainController" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+  <children>
+    <!-- MenuBar avec icônes -->
+    <MenuBar VBox.vgrow="NEVER">
+      <menus>
+        <Menu text="File">
+          <items>
+            <MenuItem onAction="#onLoadSetup" text="Load Configuration...">
+              <graphic><ImageView fx:id="iconLoad" /></graphic>
+            </MenuItem>
+            <MenuItem onAction="#onSaveSetup" text="Save Configuration">
+              <graphic><ImageView fx:id="iconSave" /></graphic>
+            </MenuItem>
+            <MenuItem onAction="#onSaveSetupAs" text="Save As...">
+              <graphic><ImageView fx:id="iconSaveAs" /></graphic>
+            </MenuItem>
+            <SeparatorMenuItem />
+            <CheckMenuItem selected="true" text="Auto Save" />
+            <SeparatorMenuItem />
+            <MenuItem onAction="#onExit" text="Exit">
+              <graphic><ImageView fx:id="iconExit" /></graphic>
+            </MenuItem>
+          </items>
+        </Menu>
+        <Menu text="Connection">
+          <items>
+            <!-- Menu déroulant pour la sélection des ports COM -->
+            <Menu fx:id="selectComPortMenu" text="Select COM Port" onShowing="#onSelectComPortMenuShown">
+              <items>
+                <!-- Placeholder -->
+                <MenuItem text="Refreshing ports..." disable="true" />
+              </items>
+            </Menu>
+            <!-- Boutons de connexion et déconnexion -->
+            <MenuItem fx:id="connectMenuItem" onAction="#onConnect" text="Connect" />
+            <MenuItem fx:id="disconnectMenuItem" onAction="#onDisconnect" text="Disconnect" />
+          </items>
+        </Menu>
+
+        <Menu text="Help">
+          <items>
+            <MenuItem onAction="#onAbout" text="About" />
+          </items>
+        </Menu>
+      </menus>
+    </MenuBar>
+
+    <!-- Contenu principal -->
+    <VBox spacing="10" VBox.vgrow="ALWAYS">
+      <!-- Première ligne : Importation et fonctions -->
+      <SplitPane dividerPositions="0.5" orientation="HORIZONTAL">
+        <!-- Panneau gauche : Importation et fonctions -->
+        <VBox spacing="10">
+          <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
+          <!-- Groupe Importation -->
+          <Label style="-fx-font-weight: bold;" text="Import Data" />
+          <GridPane>
+            <columnConstraints>
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            </columnConstraints>
+            <children>
+              <Button onAction="#onImportCsvRew" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV REW" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+              <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="184.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
+            </children>
+          </GridPane>
+
+          <!-- Groupe Fonctions -->
+          <Label style="-fx-font-weight: bold;" text="Functions" />
+          <GridPane>
+            <columnConstraints>
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            </columnConstraints>
+            <children>
+              <Button onAction="#onSendTo2306" prefHeight="25.0" prefWidth="202.0" styleClass="send-button" text="Send to 2306" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+              <Button onAction="#onStop" prefHeight="25.0" prefWidth="184.0" styleClass="stop-button" text="STOP" GridPane.rowIndex="2" />
+              <Button onAction="#onPaperPush" prefHeight="25.0" prefWidth="184.0" styleClass="function-button" text="Paper Push" />
+              <Button onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="209.0" styleClass="function-button" text="Test Writing" GridPane.columnIndex="1" />
+            </children>
+          </GridPane>
+        </VBox>
+
+        <!-- Paramètres calculés -->
+        <VBox prefHeight="209.0" prefWidth="379.0" spacing="10">
+          <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
+          <Label style="-fx-font-weight: bold;" text="Calculated Parameters" />
+          <GridPane hgap="10" vgap="10">
+            <columnConstraints>
+              <ColumnConstraints halignment="RIGHT" minWidth="100" />
+              <ColumnConstraints hgrow="ALWAYS" />
+            </columnConstraints>
+
+            <Label text="Min Frequency (Hz)" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label  fx:id="minFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+            <Label text="Max Frequency (Hz)" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <Label  fx:id="maxFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+            <Label text="Minimum dB" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+            <Label  fx:id="minDbField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label text="Maximum dB" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+            <Label  fx:id="maxDbField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+            <Label text="Paper Speed (mm/s)" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+            <Label fx:id="paperSpeedLabel" text="0.00 mm/s" GridPane.columnIndex="1" GridPane.rowIndex="4" />          </GridPane>
+        </VBox>
+      </SplitPane>
+
+      <!-- Deuxième ligne : Graphique de simulation -->
+      <VBox spacing="10">
+        <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
+        <Label style="-fx-font-weight: bold;" text="Graph Preview" />
+        <LineChart fx:id="lineChart" createSymbols="false" style="-fx-stroke-width: 1.0;" prefHeight="163.0" prefWidth="780.0" VBox.vgrow="ALWAYS">
+          <xAxis>
+            <NumberAxis label="Frequency (Hz)" tickUnit="1000" />
+          </xAxis>
+          <yAxis>
+            <NumberAxis label="Amplitude (dB)" />
+          </yAxis>
+        </LineChart>
+      </VBox>
+    </VBox>
+
+    <!-- Barre de progression et état de connexion -->
+    <HBox alignment="CENTER_LEFT" spacing="10" VBox.vgrow="NEVER">
+      <children>
+        <ProgressBar fx:id="progressBar" prefWidth="400.0" progress="0.0" />
+        <Label text="Status: " />
+        <Label fx:id="statusLabel" text="Disconnected" />
+        <Label text=" | Port: " />
+        <Label fx:id="portLabel" text="Not Selected" />
+      </children>
+      <padding><Insets bottom="5" left="10" right="10" top="5" /></padding>
+    </HBox>
+  </children>
+</VBox>
