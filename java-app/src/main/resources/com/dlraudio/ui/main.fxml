@@ -9,31 +9,19 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.image.ImageView?>
-<VBox fx:controller="com.dlraudio.dbplotter.controller.MainController" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:controller="com.dlraudio.dbplotter.controller.MainController" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1">
   <children>
     <!-- MenuBar avec icônes -->
     <MenuBar VBox.vgrow="NEVER">
       <menus>
         <Menu text="File">
           <items>
-            <MenuItem onAction="#onLoadSetup" text="Load Configuration...">
-              <graphic><ImageView fx:id="iconLoad" /></graphic>
-            </MenuItem>
-            <MenuItem onAction="#onSaveSetup" text="Save Configuration">
-              <graphic><ImageView fx:id="iconSave" /></graphic>
-            </MenuItem>
-            <MenuItem onAction="#onSaveSetupAs" text="Save As...">
-              <graphic><ImageView fx:id="iconSaveAs" /></graphic>
-            </MenuItem>
-            <SeparatorMenuItem />
-            <CheckMenuItem selected="true" text="Auto Save" />
-            <SeparatorMenuItem />
             <MenuItem onAction="#onExit" text="Exit">
               <graphic><ImageView fx:id="iconExit" /></graphic>
             </MenuItem>
           </items>
         </Menu>
-        <Menu text="Connection">
+        <Menu text="Connect to DAC">
           <items>
             <!-- Menu déroulant pour la sélection des ports COM -->
             <Menu fx:id="selectComPortMenu" text="Select COM Port" onShowing="#onSelectComPortMenuShown">
@@ -47,6 +35,18 @@
             <MenuItem fx:id="disconnectMenuItem" onAction="#onDisconnect" text="Disconnect" />
           </items>
         </Menu>
+
+        <Menu text="Smoothing">
+          <MenuItem fx:id="smoothingNoneMenuItem" text="None" onAction="#onApplySmoothingNone" />
+          <MenuItem fx:id="smoothing1OctaveMenuItem" text="1/1 Octave" onAction="#onApplySmoothing1Octave" />
+          <MenuItem fx:id="smoothingHalfOctaveMenuItem" text="1/2 Octave" onAction="#onApplySmoothingHalfOctave" />
+          <MenuItem fx:id="smoothingThirdOctaveMenuItem" text="1/3 Octave" onAction="#onApplySmoothingThirdOctave" />
+          <MenuItem fx:id="smoothingSixthOctaveMenuItem" text="1/6 Octave" onAction="#onApplySmoothingSixthOctave" />
+          <MenuItem fx:id="smoothingTwelfthOctaveMenuItem" text="1/12 Octave" onAction="#onApplySmoothingTwelfthOctave" />
+          <MenuItem fx:id="smoothingTwentyFourthOctaveMenuItem" text="1/24 Octave" onAction="#onApplySmoothingTwentyFourthOctave" />
+          <MenuItem fx:id="smoothingFortyEighthOctaveMenuItem" text="1/48 Octave" onAction="#onApplySmoothingFortyEighthOctave" />
+        </Menu>
+
 
         <Menu text="Help">
           <items>
@@ -80,15 +80,17 @@
           <Label style="-fx-font-weight: bold;" text="Functions" />
           <GridPane>
             <columnConstraints>
-              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
             </columnConstraints>
-            <children>
-              <Button onAction="#onSendTo2306" prefHeight="25.0" prefWidth="202.0" styleClass="send-button" text="Send to 2306" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-              <Button onAction="#onStop" prefHeight="25.0" prefWidth="184.0" styleClass="stop-button" text="STOP" GridPane.rowIndex="2" />
-              <Button onAction="#onPaperPush" prefHeight="25.0" prefWidth="184.0" styleClass="function-button" text="Paper Push" />
-              <Button onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="209.0" styleClass="function-button" text="Test Writing" GridPane.columnIndex="1" />
-            </children>
+            <Button fx:id="sendTo2306Button" onAction="#onSendTo2306" prefHeight="25.0" prefWidth="202.0"
+                    styleClass="send-button" text="Send to 2306" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Button fx:id="stopButton" onAction="#onStop" prefHeight="25.0" prefWidth="184.0" styleClass="stop-button"
+                    text="STOP" GridPane.rowIndex="2"/>
+            <Button fx:id="paperPushButton" onAction="#onPaperPush" prefHeight="25.0" prefWidth="184.0"
+                    styleClass="function-button" text="Paper Push"/>
+            <Button fx:id="autoCalibrateButton" onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="209.0"
+                    styleClass="function-button" text="Test Writing" GridPane.columnIndex="1"/>
           </GridPane>
         </VBox>
 
@@ -113,7 +115,7 @@
             <Label  fx:id="maxDbField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
 
             <Label text="Paper Speed (mm/s)" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-            <Label fx:id="paperSpeedLabel" text="0.00 mm/s" GridPane.columnIndex="1" GridPane.rowIndex="4" />          </GridPane>
+            <Label fx:id="paperSpeedField" text="0.00 mm/s" GridPane.columnIndex="1" GridPane.rowIndex="4" />          </GridPane>
         </VBox>
       </SplitPane>
 
@@ -134,14 +136,19 @@
 
     <!-- Barre de progression et état de connexion -->
     <HBox alignment="CENTER_LEFT" spacing="10" VBox.vgrow="NEVER">
+      <padding><Insets bottom="5" left="10" right="10" top="5" /></padding>
       <children>
-        <ProgressBar fx:id="progressBar" prefWidth="400.0" progress="0.0" />
+        <ProgressBar fx:id="progressBar" prefWidth="150.0" progress="0.0" />
         <Label text="Status: " />
         <Label fx:id="statusLabel" text="Disconnected" />
-        <Label text=" | Port: " />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label text="Port: " />
         <Label fx:id="portLabel" text="Not Selected" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label text="Current file: " />
+        <Label fx:id="currentFileLabel" text="None" />
       </children>
-      <padding><Insets bottom="5" left="10" right="10" top="5" /></padding>
     </HBox>
+
   </children>
 </VBox>

@@ -22,52 +22,63 @@ public class FrequencyData {
         return magnitude;
     }
 
-    /**
-     * Downsamples the data by taking every nth point.
-     *
-     * @param data List of FrequencyData points.
-     * @param step Step size for downsampling.
-     * @return Downsampled list of FrequencyData points.
-     */
-    public static List<FrequencyData> downSampleData(List<FrequencyData> data, int step) {
-        return data.stream()
-                .filter(point -> data.indexOf(point) % step == 0)
-                .collect(Collectors.toList());
+    public static double getTotalDuration(List<FrequencyData> dataPoints) {
+        if (dataPoints == null || dataPoints.isEmpty()) {
+            return 0.0;
+        }
+        double minFreq = getMinFrequency(dataPoints);
+        double maxFreq = getMaxFrequency(dataPoints);
+
+        // Durée estimée basée sur l'écart de fréquences
+        double duration = (maxFreq - minFreq) * 0.1; // FACTEUR À ADAPTER SI BESOIN
+        return Math.max(duration, 10.0); // Assurer un minimum de 10s
     }
 
-    /**
-     * Smooths the data using a moving average.
-     *
-     * @param data       List of FrequencyData points.
-     * @param windowSize Size of the window for the moving average.
-     * @return Smoothed list of FrequencyData points.
-     */
-    public static List<FrequencyData> smoothData(List<FrequencyData> data, int windowSize) {
-        if (data == null || data.size() < windowSize || windowSize <= 1) {
-            return data;  // Not enough data or invalid window size
+
+    //info here : https://dsp.stackexchange.com/questions/9967/1-n-octave-smoothing
+    public static List<FrequencyData> smoothByOctave(List<FrequencyData> data, double octaveFraction) {
+        if (data == null || data.isEmpty() || octaveFraction <= 0) {
+            return data;
         }
 
         List<FrequencyData> smoothedData = new ArrayList<>();
-        int halfWindow = windowSize / 2;
+        double bandwidthFactor = 0.6 * (1.0 / octaveFraction);  // Facteur ajusté pour le filtre
 
-        for (int i = halfWindow; i < data.size() - halfWindow; i++) {
-            double sumFrequency = 0.0;
-            double sumMagnitude = 0.0;
+        for (int i = 0; i < data.size(); i++) {
+            FrequencyData point = data.get(i);
+            double centerFreq = point.getFrequency();
 
-            // Calculate average over the window
-            for (int j = -halfWindow; j <= halfWindow; j++) {
-                sumFrequency += data.get(i + j).getFrequency();
-                sumMagnitude += data.get(i + j).getMagnitude();
+            // Limiter les points voisins dans une plage raisonnable
+            double lowerBound = centerFreq / Math.pow(2, 1.0 / (2 * octaveFraction));
+            double upperBound = centerFreq * Math.pow(2, 1.0 / (2 * octaveFraction));
+
+            double sumWeights = 0;
+            double sumWeightedFreq = 0;
+            double sumWeightedMagnitude = 0;
+
+            for (FrequencyData otherPoint : data) {
+                double otherFreq = otherPoint.getFrequency();
+
+                // Ignorer les points trop éloignés de la plage d'intérêt
+                if (otherFreq < lowerBound || otherFreq > upperBound) continue;
+
+                double weight = Math.exp(-Math.pow(Math.log10(otherFreq / centerFreq) / bandwidthFactor, 2));
+                sumWeights += weight;
+                sumWeightedFreq += weight * otherFreq;
+                sumWeightedMagnitude += weight * otherPoint.getMagnitude();
             }
 
-            double smoothedFrequency = sumFrequency / windowSize;
-            double smoothedMagnitude = sumMagnitude / windowSize;
-
-            smoothedData.add(new FrequencyData(smoothedFrequency, smoothedMagnitude));
+            if (sumWeights > 0) {
+                smoothedData.add(new FrequencyData(sumWeightedFreq / sumWeights, sumWeightedMagnitude / sumWeights));
+            } else {
+                smoothedData.add(point);  // Garder le point original si aucun voisin trouvé
+            }
         }
 
         return smoothedData;
     }
+
+
 
     // Methods for calculated parameters
     public static double getMinFrequency(List<FrequencyData> data) {

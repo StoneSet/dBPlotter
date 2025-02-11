@@ -18,14 +18,14 @@ public class MainApp extends Application {
         Parent root = loader.load();
 
         // Définir la scène et le titre de la fenêtre
-        primaryStage.setTitle("DB Plotter Application");
+        primaryStage.setTitle("DB Plotter Application - DLR Audio");
         Scene scene = new Scene(root, 800, 500);
 
         // Ajouter la feuille de style
         scene.getStylesheets().add(getClass().getResource("/com/dlraudio/ui/style.css").toExternalForm());
 
         // Ajouter une icône
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/logo.png")));
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
 
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
+
+<?import javafx.scene.layout.Region?>
+<VBox prefHeight="450" prefWidth="500" spacing="10" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dlraudio.dbplotter.controller.AboutController">
+    <padding>
+        <Insets bottom="10" left="10" right="10" top="10" />
+    </padding>
+
+    <!-- En-tête avec le titre et l'image -->
+    <HBox spacing="10">
+        <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="About dB Plotter" />
+
+        <!-- Un espace flexible pour pousser l'image à droite -->
+        <Region HBox.hgrow="ALWAYS" />
+
+        <ImageView fx:id="logoImageView" fitHeight="70" fitWidth="100">
+            <HBox.margin>
+                <Insets />
+            </HBox.margin>
+        </ImageView>
+    </HBox>
+
+    <TextFlow>
+        <Text text="A JavaFX-based desktop application designed to interface with the Bruel and Kjaer 2306 Level Recorder. This application processes acoustic data from CSV files (ARTA and REW formats) and sends control commands to the device over a serial connection. The purpose of this project is simple yet nostalgic: to generate printed reports, replicating the experience of traditional paper plots. What you see in ARTA or REW is printed directly on paper – no more, no less. A playful and impractical solution for enthusiasts of vintage acoustic measurement workflows." wrappingWidth="480" />
+    </TextFlow>
+
+
+    <Separator />
+
+    <Label style="-fx-font-size: 14px; -fx-font-weight: bold;" text="Version Info" />
+    <Text wrappingWidth="480">
+        Major: 1
+        Minor: 0
+        Build: 1
+        Revision: 0
+    </Text>
+
+    <Separator />
+
+    <Label style="-fx-font-size: 14px; -fx-font-weight: bold;" text="License" />
+    <TextFlow>
+        <Text text="dB Plotter is licensed under the MIT License." />
+        <Text text="You are free to use, modify, and distribute this software under the conditions of the MIT License." />
+        <Text text="For more details, visit " />
+        <Hyperlink text="https://opensource.org/licenses/MIT" onAction="#onOpenLicenseLink" />
+        <Text text="." />
+    </TextFlow>
+
+    <Separator />
+
+    <Label style="-fx-font-size: 14px; -fx-font-weight: bold;" text="Contact" />
+    <TextFlow>
+        <Text text="Email: " />
+        <Hyperlink onAction="#onOpenMailLink" text="hello@valentinderouet.fr" />
+        <Text text="Website: " />
+        <Hyperlink onAction="#onOpenWebsiteLink" text="https://dlr-audio.com" />
+    </TextFlow>
+    <TextFlow>
+        <Text text="Github repository: " />
+        <Hyperlink onAction="#onOpenGithubLink" text="https://github.com/StoneSet/dbPlotter" />
+    </TextFlow>
+
+
+    <Separator />
+
+    <Button fx:id="closeButton" onAction="#onClose" prefWidth="80" text="Close" />
+</VBox>

@@ -30,7 +30,7 @@ public class CsvImporter {
 
             while ((line = reader.readLine()) != null) {
                 line = line.strip();
-                System.out.println("Read line: " + line);
+                //System.out.println("Read line: " + line);
 
                 // Ignorer les lignes de métadonnées ou vides
                 if (line.isEmpty()) {
@@ -76,8 +76,6 @@ public class CsvImporter {
         System.out.println("Total data points imported: " + dataPoints.size());
         return dataPoints;
     }
-
-
 
     /**
      * Importe un fichier CSV d'ARTA avec un séparateur défini.

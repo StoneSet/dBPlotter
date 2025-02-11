@@ -4,10 +4,13 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 
 public class SerialPortUtils {
 
     private static SerialPort serialPort;
+    private static Thread listenerThread;
+    private static Consumer<String> messageListener; // Callback pour gérer les messages reçus
 
     // Lister les ports disponibles
     public static String[] listAvailablePorts() {
@@ -63,18 +66,43 @@ public class SerialPortUtils {
         return serialPort != null && serialPort.isOpen();
     }
 
-    // Lire les données du port série
-    public static String readData() {
-        if (serialPort != null && serialPort.isOpen()) {
+    /**
+     * Ajoute un listener qui sera appelé dès qu'un message est reçu.
+     */
+    public static void setMessageListener(Consumer<String> listener) {
+        messageListener = listener;
+    }
+
+    /**
+     * Écoute en continu les messages du port série.
+     */
+    private static void startListening() {
+        if (listenerThread != null && listenerThread.isAlive()) {
+            return;
+        }
+
+        listenerThread = new Thread(() -> {
             try {
                 InputStream inputStream = serialPort.getInputStream();
                 byte[] buffer = new byte[1024];
-                int numBytes = inputStream.read(buffer);
-                return new String(buffer, 0, numBytes);
+
+                while (serialPort.isOpen()) {
+                    int numBytes = inputStream.read(buffer);
+                    if (numBytes > 0) {
+                        String received = new String(buffer, 0, numBytes).trim();
+                        System.out.println("Received: " + received);
+
+                        if (messageListener != null) {
+                            messageListener.accept(received);
+                        }
+                    }
+                }
             } catch (Exception e) {
-                System.err.println("Error reading data: " + e.getMessage());
+                System.err.println("Error in serial listening: " + e.getMessage());
             }
-        }
-        return null;
+        });
+
+        listenerThread.setDaemon(true);
+        listenerThread.start();
     }
 }

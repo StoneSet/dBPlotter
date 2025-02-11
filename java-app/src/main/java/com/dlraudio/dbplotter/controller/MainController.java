@@ -1,24 +1,35 @@
 package com.dlraudio.dbplotter.controller;
 
 import com.dlraudio.dbplotter.model.FrequencyData;
+import com.dlraudio.dbplotter.model.PlotParameters;
 import com.dlraudio.dbplotter.service.PlottingService;
+import com.dlraudio.dbplotter.test.AutoCalibrateTest;
 import com.dlraudio.dbplotter.util.CsvImporter;
 import com.dlraudio.dbplotter.util.FileUtils;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
-import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class MainController {
 
+    @FXML
+    public MenuItem smoothingNoneMenuItem;
+    @FXML
+    public Label currentFileLabel;
     @FXML
     private Menu selectComPortMenu;
 
@@ -41,10 +52,10 @@ public class MainController {
     private Label minDbField;
 
     @FXML
-    private Label paperSpeedField;
+    private Label maxDbField;
 
     @FXML
-    private Label maxDbField;
+    private Label paperSpeedField;
 
     @FXML
     private Label portLabel;
@@ -55,21 +66,77 @@ public class MainController {
     @FXML
     private LineChart<Number, Number> lineChart;
 
+    @FXML
+    private MenuItem smoothing1OctaveMenuItem;
+    @FXML
+    private MenuItem smoothingHalfOctaveMenuItem;
+    @FXML
+    private MenuItem smoothingThirdOctaveMenuItem;
+    @FXML
+    private MenuItem smoothingSixthOctaveMenuItem;
+    @FXML
+    private MenuItem smoothingTwelfthOctaveMenuItem;
+    @FXML
+    private MenuItem smoothingTwentyFourthOctaveMenuItem;
+    @FXML
+    private MenuItem smoothingFortyEighthOctaveMenuItem;
+    @FXML
+    private Button sendTo2306Button;
+    @FXML
+    private Button stopButton;
+    @FXML
+    private Button paperPushButton;
+    @FXML
+    private Button autoCalibrateButton;
+
+    private boolean isCsvImported = false;
+
     private String selectedPort;
-    private boolean isConnected = false;
+    //for test purpose
+    private boolean isConnected = true;
+
 
     private PlottingService plottingService;
+    private PlotParameters plotParameters;
 
     @FXML
     public void initialize() {
         connectMenuItem.setDisable(true);
         disconnectMenuItem.setDisable(true);
+        disableSmoothingMenus(true);
+        updateButtonStates();
 
         plottingService = new PlottingService(lineChart);
         plottingService.initializePlot("Frequency (Hz)", "Amplitude (dB)");
+
+        arduinoController.setProgressListener(progress ->
+                Platform.runLater(() -> progressBar.setProgress(progress))
+        );
     }
 
-    private PaperControlController paperController = new PaperControlController();
+    private void updateButtonStates() {
+        //boolean enableArduinoActions = SerialPortUtils.isConnected();
+        //test purpose
+        boolean enableArduinoActions = true;
+        boolean enableSendTo2306 = enableArduinoActions && isCsvImported;
+
+        sendTo2306Button.setDisable(!enableSendTo2306);
+        stopButton.setDisable(!enableArduinoActions);
+        paperPushButton.setDisable(!enableArduinoActions);
+        autoCalibrateButton.setDisable(!enableArduinoActions);
+    }
+
+
+        private void disableSmoothingMenus(boolean disable) {
+        smoothingNoneMenuItem.setDisable(disable);
+        smoothing1OctaveMenuItem.setDisable(disable);
+        smoothingHalfOctaveMenuItem.setDisable(disable);
+        smoothingThirdOctaveMenuItem.setDisable(disable);
+        smoothingSixthOctaveMenuItem.setDisable(disable);
+        smoothingTwelfthOctaveMenuItem.setDisable(disable);
+        smoothingTwentyFourthOctaveMenuItem.setDisable(disable);
+        smoothingFortyEighthOctaveMenuItem.setDisable(disable);
+    }
 
     private void updateCalculatedParameters(List<FrequencyData> dataPoints) {
         double minFreq = FrequencyData.getMinFrequency(dataPoints);
@@ -77,17 +144,19 @@ public class MainController {
         double minDb = FrequencyData.getMinMagnitude(dataPoints);
         double maxDb = FrequencyData.getMaxMagnitude(dataPoints);
 
-        minFrequencyField.setText(String.format("%.2f Hz", minFreq));
-        maxFrequencyField.setText(String.format("%.2f Hz", maxFreq));
-        minDbField.setText(String.format("%.2f dB", minDb));
-        maxDbField.setText(String.format("%.2f dB", maxDb));
+        // Calcul et stockage des paramètres dans PlotParameters
+        plotParameters = new PlotParameters(minFreq, maxFreq, minDb, maxDb, 0.0);
+        // Mise à jour de l'interface utilisateur
+        displayCalculatedParameters();
+    }
 
-        // Configuration des paramètres de vitesse du papier
-        paperController.setupParameters(dataPoints.size(), 60.0);  // Durée fictive : 60 secondes
-        double paperSpeed = paperController.calculatePaperSpeed();
-
-        // Mise à jour du champ de la vitesse du papier
-        paperSpeedField.setText(String.format("%.2f mm/s", paperSpeed));
+    private void displayCalculatedParameters() {
+        if (plotParameters != null) {
+            minFrequencyField.setText(String.format("%.2f Hz", plotParameters.getMinFrequency()));
+            maxFrequencyField.setText(String.format("%.2f Hz", plotParameters.getMaxFrequency()));
+            minDbField.setText(String.format("%.2f dB", plotParameters.getMinDb()));
+            maxDbField.setText(String.format("%.2f dB", plotParameters.getMaxDb()));
+        }
     }
 
     @FXML
@@ -119,23 +188,22 @@ public class MainController {
 
     @FXML
     public void onConnect() {
-        if (selectedPort != null && SerialPortUtils.connect(selectedPort, 9600)) {
+        if (selectedPort != null && SerialPortUtils.connect(selectedPort, 115200)) {
             arduinoController.setupPort(selectedPort);
-            isConnected = true;
             statusLabel.setText("Connected");
-            disconnectMenuItem.setDisable(false);
-            connectMenuItem.setDisable(true);
             System.out.println("Connected to " + selectedPort);
         } else {
             statusLabel.setText("Failed to connect.");
             System.err.println("Connection failed.");
         }
+        updateButtonStates();
     }
 
     @FXML
     public void onDisconnect() {
         SerialPortUtils.disconnect();
         isConnected = false;
+        updateButtonStates();
         statusLabel.setText("Disconnected.");
         connectMenuItem.setDisable(false);
         disconnectMenuItem.setDisable(true);
@@ -159,72 +227,137 @@ public class MainController {
             CsvImporter csvImportService = new CsvImporter();
             List<FrequencyData> dataPoints;
 
-            // Importation des données CSV en fonction du type
+            // Importation des données CSV selon le type de fichier
             if (type.equalsIgnoreCase("rew")) {
                 dataPoints = csvImportService.importFromRew(csvFile);
             } else {
                 dataPoints = csvImportService.importFromArta(csvFile);
             }
 
-            // Vérification et traitement des données importées
+            // Vérification et affichage des données brutes
             if (dataPoints != null && !dataPoints.isEmpty()) {
-                // Échantillonnage et tracé des données
-                List<FrequencyData> downsampledData = FrequencyData.downSampleData(dataPoints, 10);  // Exemple : 1 point tous les 10
-                plottingService.plotData(downsampledData);
+                plottingService.plotData(dataPoints);
 
-                // Mise à jour des paramètres calculés, y compris la vitesse du papier
+                // Mise à jour des paramètres calculés
                 updateCalculatedParameters(dataPoints);
 
+                // Activer les menus de smoothing
+                disableSmoothingMenus(false);
+
+                currentFileLabel.setText(csvFile.getName());
+                isCsvImported = true;  // Fichier CSV importé
+                updateButtonStates();  // Mise à jour des boutons
+                // Mise à jour du statut
                 statusLabel.setText("CSV data imported and plotted.");
+
+                // Stocker les données brutes dans le service pour un éventuel lissage
+                plottingService.setCurrentData(dataPoints);
             } else {
                 statusLabel.setText("No data found in the CSV file.");
             }
         }
     }
 
+    public void onApplySmoothingNone() {
+        List<FrequencyData> originalData = plottingService.getOriginalData();
+        if (originalData == null || originalData.isEmpty()) {
+            statusLabel.setText("No data available for smoothing.");
+            return;
+        }
+
+        plottingService.plotData(originalData);
+        statusLabel.setText("Removed smoothing.");
+    }
+
+    // Lissage basé sur des fractions d'octave
+    @FXML
+    private void onApplySmoothing1Octave() {
+        applySmoothing(1);
+    }
+
+    @FXML
+    private void onApplySmoothingHalfOctave() {
+        applySmoothing(2);
+    }
+
+    @FXML
+    private void onApplySmoothingThirdOctave() {
+        applySmoothing(3);
+    }
+
+    @FXML
+    private void onApplySmoothingSixthOctave() {
+        applySmoothing(6);
+    }
+
+    @FXML
+    private void onApplySmoothingTwelfthOctave() {
+        applySmoothing(12);
+    }
+
+    @FXML
+    private void onApplySmoothingTwentyFourthOctave() {
+        applySmoothing(24);
+    }
+
+    @FXML
+    private void onApplySmoothingFortyEighthOctave() {
+        applySmoothing(48);
+    }
+
+    @FXML
+    private void applySmoothing(double octaveFraction) {
+        List<FrequencyData> originalData = plottingService.getOriginalData();  // Récupérer les données brutes
+        if (originalData == null || originalData.isEmpty()) {
+            statusLabel.setText("No data available for smoothing.");
+            return;
+        }
+
+        // Appliquer le lissage sans modifier les données originales
+        List<FrequencyData> smoothedData = FrequencyData.smoothByOctave(originalData, octaveFraction);
+        plottingService.plotData(smoothedData);
+        statusLabel.setText(String.format("Applied %d/%d octave smoothing.", (int) octaveFraction, 1));
+    }
 
     @FXML
     public void onSendTo2306() {
-        System.out.println("Starting data transfer to 2306...");
-        progressBar.setProgress(0.0);
-
-        new Thread(() -> {
-            int totalSteps = 100;
-            for (int i = 1; i <= totalSteps; i++) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                double progress = (double) i / totalSteps;
-                Platform.runLater(() -> progressBar.setProgress(progress));
+        if (isConnected) {
+            // Récupération des données actuelles du graphe
+            List<FrequencyData> dataPoints = plottingService.getCurrentData();
+            if (dataPoints == null || dataPoints.isEmpty()) {
+                System.err.println("No data available for transmission.");
+                return;
             }
 
+            // Calcul de la durée réelle basée sur les données
+            double estimatedDurationSec = FrequencyData.getTotalDuration(dataPoints);
+            arduinoController.updatePrintParameters(dataPoints.size(), estimatedDurationSec);
+
+            // Obtenir la vitesse du papier mise à jour
+            double paperSpeedMmPerSec = arduinoController.getPaperSpeed();
+            if (paperSpeedMmPerSec <= 0) {
+                System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Cannot proceed.");
+                return;
+            }
+
+            paperSpeedField.setText(String.format("%.2f mm/s", arduinoController.getPaperSpeed()));
+
+            // Démarrer la machine
+            arduinoController.startMotor();
+
+            // Initialiser la barre de progression et le statut
             Platform.runLater(() -> {
-                System.out.println("Data transfer completed.");
-                statusLabel.setText("Data transfer completed.");
+                progressBar.setProgress(0);
+                statusLabel.setText("Sending data...");
             });
-        }).start();
+
+            // 🔥 Lancer la transmission avec la vitesse du papier mise à jour
+            arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
+        }
     }
 
     private Window getWindow() {
         return statusLabel.getScene().getWindow();
-    }
-
-    @FXML
-    public void onLoadSetup() {
-        System.out.println("Load Setup clicked");
-    }
-
-    @FXML
-    public void onSaveSetup() {
-        System.out.println("Save Setup clicked");
-    }
-
-    @FXML
-    public void onSaveSetupAs() {
-        System.out.println("Save Setup As clicked");
     }
 
     @FXML
@@ -233,22 +366,95 @@ public class MainController {
     }
 
     @FXML
-    public void onStop() {
-        System.out.println("Stop clicked");
+    private void onStop() {
+        if (isConnected) {
+            arduinoController.stopTransmission();
+            arduinoController.stopMotor();
+            System.out.println("Stop command sent to Arduino.");
+            statusLabel.setText("Machine stopped.");
+        } else {
+            System.err.println("Cannot stop: Arduino is not connected.");
+        }
     }
 
     @FXML
-    public void onPaperPush() {
-        System.out.println("Paper Push clicked");
+    private void onPaperPush() {
+        if (isConnected) {
+            arduinoController.sendCommand("PAPER_PUSH");
+            System.out.println("Paper Push command sent.");
+            statusLabel.setText("Paper advancing...");
+        } else {
+            System.err.println("Cannot push paper: Arduino is not connected.");
+        }
     }
 
     @FXML
-    public void onAutoCalibrate() {
-        System.out.println("Auto Calibrate clicked");
+    private void onAutoCalibrate() {
+        if (isConnected) {
+            System.out.println("Starting Auto Calibration...");
+            statusLabel.setText("Auto Calibrating...");
+
+            // 🔥 Mise à jour des paramètres de la calibration
+            int totalPoints = 100;  // Nombre de points pour l'onde sinusoïdale
+            double estimatedDurationSec = 10.0; // Ex: 10s pour parcourir l'onde de calibration
+            arduinoController.updatePrintParameters(totalPoints, estimatedDurationSec);
+
+            // 🔥 Récupérer la vitesse mise à jour
+            double paperSpeedMmPerSec = arduinoController.getPaperSpeed();
+            if (paperSpeedMmPerSec <= 0) {
+                System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Aborting calibration.");
+                return;
+            }
+
+            paperSpeedField.setText(String.format("%.2f mm/s", arduinoController.getPaperSpeed()));
+
+            // Générer l'onde sinusoïdale
+            List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, 2.5, 1.0, 2.5);
+
+            // Convertir l'onde en une liste de FrequencyData
+            List<FrequencyData> dataPoints = testWave.stream()
+                    .map(voltage -> new FrequencyData(0, voltage)) // Fréquence 0 car inutile ici
+                    .toList();
+
+            // Initialiser la barre de progression
+            Platform.runLater(() -> {
+                progressBar.setProgress(0);
+                statusLabel.setText("Auto Calibration in Progress...");
+            });
+
+            updateCalculatedParameters(dataPoints);
+            // 🔥 Lancer la transmission avec la bonne vitesse
+            new Thread(() -> {
+                arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
+
+                Platform.runLater(() -> {
+                    statusLabel.setText("Calibration Complete.");
+                    progressBar.setProgress(1.0);
+                });
+
+            }).start();
+
+            System.out.println("Auto Calibration completed.");
+        } else {
+            System.err.println("Cannot calibrate: Arduino is not connected.");
+        }
     }
 
     @FXML
     public void onAbout() {
-        System.out.println("About clicked");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/about.fxml"));
+            Parent root = loader.load();
+
+            Stage aboutStage = new Stage();
+            aboutStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
+            aboutStage.setResizable(false);
+            aboutStage.setTitle("About this fucking good app");
+            aboutStage.setScene(new Scene(root));
+            aboutStage.initModality(Modality.APPLICATION_MODAL);  // Empêche de cliquer sur la fenêtre principale
+            aboutStage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

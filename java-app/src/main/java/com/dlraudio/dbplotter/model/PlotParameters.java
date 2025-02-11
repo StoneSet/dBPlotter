@@ -23,4 +23,12 @@ public class PlotParameters {
         return maxFrequency;
     }
 
+    public double getMinDb() {
+        return minDb;
+    }
+
+    public double getMaxDb() {
+        return maxDb;
+    }
+
 }
