@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FrequencyData {
-    private double frequency;
-    private double magnitude;
+    private final double frequency;
+    private final double magnitude;
 
     public FrequencyData(double frequency, double magnitude) {
         this.frequency = frequency;
@@ -21,19 +21,6 @@ public class FrequencyData {
     public double getMagnitude() {
         return magnitude;
     }
-
-    public static double getTotalDuration(List<FrequencyData> dataPoints) {
-        if (dataPoints == null || dataPoints.isEmpty()) {
-            return 0.0;
-        }
-        double minFreq = getMinFrequency(dataPoints);
-        double maxFreq = getMaxFrequency(dataPoints);
-
-        // Durée estimée basée sur l'écart de fréquences
-        double duration = (maxFreq - minFreq) * 0.1; // FACTEUR À ADAPTER SI BESOIN
-        return Math.max(duration, 10.0); // Assurer un minimum de 10s
-    }
-
 
     //info here : https://dsp.stackexchange.com/questions/9967/1-n-octave-smoothing
     public static List<FrequencyData> smoothByOctave(List<FrequencyData> data, double octaveFraction) {
@@ -77,8 +64,6 @@ public class FrequencyData {
 
         return smoothedData;
     }
-
-
 
     // Methods for calculated parameters
     public static double getMinFrequency(List<FrequencyData> data) {

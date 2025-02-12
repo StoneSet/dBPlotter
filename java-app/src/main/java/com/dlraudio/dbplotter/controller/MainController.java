@@ -3,12 +3,12 @@ package com.dlraudio.dbplotter.controller;
 import com.dlraudio.dbplotter.model.FrequencyData;
 import com.dlraudio.dbplotter.model.PlotParameters;
 import com.dlraudio.dbplotter.service.PlottingService;
+import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.test.AutoCalibrateTest;
 import com.dlraudio.dbplotter.util.CsvImporter;
 import com.dlraudio.dbplotter.util.FileUtils;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -127,7 +127,7 @@ public class MainController {
     }
 
 
-        private void disableSmoothingMenus(boolean disable) {
+    private void disableSmoothingMenus(boolean disable) {
         smoothingNoneMenuItem.setDisable(disable);
         smoothing1OctaveMenuItem.setDisable(disable);
         smoothingHalfOctaveMenuItem.setDisable(disable);
@@ -145,8 +145,7 @@ public class MainController {
         double maxDb = FrequencyData.getMaxMagnitude(dataPoints);
 
         // Calcul et stockage des paramètres dans PlotParameters
-        plotParameters = new PlotParameters(minFreq, maxFreq, minDb, maxDb, 0.0);
-        // Mise à jour de l'interface utilisateur
+        plotParameters = new PlotParameters(minFreq, maxFreq, minDb, maxDb);
         displayCalculatedParameters();
     }
 
@@ -184,7 +183,7 @@ public class MainController {
         System.out.println("Selected port: " + port);
     }
 
-    private ArduinoCommandController arduinoController = new ArduinoCommandController();
+    private final ArduinoCommandController arduinoController = new ArduinoCommandController();
 
     @FXML
     public void onConnect() {
@@ -322,36 +321,29 @@ public class MainController {
     @FXML
     public void onSendTo2306() {
         if (isConnected) {
-            // Récupération des données actuelles du graphe
             List<FrequencyData> dataPoints = plottingService.getCurrentData();
             if (dataPoints == null || dataPoints.isEmpty()) {
                 System.err.println("No data available for transmission.");
                 return;
             }
 
-            // Calcul de la durée réelle basée sur les données
-            double estimatedDurationSec = FrequencyData.getTotalDuration(dataPoints);
-            arduinoController.updatePrintParameters(dataPoints.size(), estimatedDurationSec);
+            double estimatedDurationSec = PrintSpeedCalculatorService.getTotalDuration(dataPoints);
+            double paperSpeedMmPerSec   = PrintSpeedCalculatorService.calculatePaperSpeed(dataPoints.size(), estimatedDurationSec);
 
-            // Obtenir la vitesse du papier mise à jour
-            double paperSpeedMmPerSec = arduinoController.getPaperSpeed();
             if (paperSpeedMmPerSec <= 0) {
                 System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Cannot proceed.");
                 return;
             }
 
-            paperSpeedField.setText(String.format("%.2f mm/s", arduinoController.getPaperSpeed()));
-
-            // Démarrer la machine
-            arduinoController.startMotor();
-
-            // Initialiser la barre de progression et le statut
+            // Mettre à jour l'affichage
             Platform.runLater(() -> {
+                paperSpeedField.setText(String.format("%.2f mm/s", paperSpeedMmPerSec));
                 progressBar.setProgress(0);
                 statusLabel.setText("Sending data...");
             });
 
-            // 🔥 Lancer la transmission avec la vitesse du papier mise à jour
+            //do the fucking work
+            arduinoController.startMotor();
             arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
         }
     }
@@ -380,6 +372,7 @@ public class MainController {
     @FXML
     private void onPaperPush() {
         if (isConnected) {
+            arduinoController.sendPwmFrequency(10);
             arduinoController.sendCommand("PAPER_PUSH");
             System.out.println("Paper Push command sent.");
             statusLabel.setText("Paper advancing...");
@@ -394,22 +387,14 @@ public class MainController {
             System.out.println("Starting Auto Calibration...");
             statusLabel.setText("Auto Calibrating...");
 
-            // 🔥 Mise à jour des paramètres de la calibration
             int totalPoints = 100;  // Nombre de points pour l'onde sinusoïdale
             double estimatedDurationSec = 10.0; // Ex: 10s pour parcourir l'onde de calibration
-            arduinoController.updatePrintParameters(totalPoints, estimatedDurationSec);
+            double paperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(totalPoints, estimatedDurationSec); // Exemple : 100 points sur 10 sec
 
-            // 🔥 Récupérer la vitesse mise à jour
-            double paperSpeedMmPerSec = arduinoController.getPaperSpeed();
-            if (paperSpeedMmPerSec <= 0) {
-                System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Aborting calibration.");
-                return;
-            }
-
-            paperSpeedField.setText(String.format("%.2f mm/s", arduinoController.getPaperSpeed()));
+            paperSpeedField.setText(String.format("%.2f mm/s", PrintSpeedCalculatorService.calculatePaperSpeed(totalPoints, estimatedDurationSec)));
 
             // Générer l'onde sinusoïdale
-            List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, 2.5, 1.0, 2.5);
+            List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, 2.5, 2.5);
 
             // Convertir l'onde en une liste de FrequencyData
             List<FrequencyData> dataPoints = testWave.stream()
@@ -423,7 +408,6 @@ public class MainController {
             });
 
             updateCalculatedParameters(dataPoints);
-            // 🔥 Lancer la transmission avec la bonne vitesse
             new Thread(() -> {
                 arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
 
@@ -451,7 +435,7 @@ public class MainController {
             aboutStage.setResizable(false);
             aboutStage.setTitle("About this fucking good app");
             aboutStage.setScene(new Scene(root));
-            aboutStage.initModality(Modality.APPLICATION_MODAL);  // Empêche de cliquer sur la fenêtre principale
+            aboutStage.initModality(Modality.APPLICATION_MODAL);
             aboutStage.showAndWait();
         } catch (IOException e) {
             e.printStackTrace();

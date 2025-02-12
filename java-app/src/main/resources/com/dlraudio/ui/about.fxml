@@ -16,14 +16,9 @@
     <padding>
         <Insets bottom="10" left="10" right="10" top="10" />
     </padding>
-
-    <!-- En-tête avec le titre et l'image -->
     <HBox spacing="10">
         <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="About dB Plotter" />
-
-        <!-- Un espace flexible pour pousser l'image à droite -->
         <Region HBox.hgrow="ALWAYS" />
-
         <ImageView fx:id="logoImageView" fitHeight="70" fitWidth="100">
             <HBox.margin>
                 <Insets />

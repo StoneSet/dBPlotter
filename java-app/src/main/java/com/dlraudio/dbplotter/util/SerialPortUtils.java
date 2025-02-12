@@ -10,7 +10,7 @@ public class SerialPortUtils {
 
     private static SerialPort serialPort;
     private static Thread listenerThread;
-    private static Consumer<String> messageListener; // Callback pour gérer les messages reçus
+    private static Consumer<String> messageListener;
 
     // Lister les ports disponibles
     public static String[] listAvailablePorts() {
@@ -68,6 +68,7 @@ public class SerialPortUtils {
 
     /**
      * Ajoute un listener qui sera appelé dès qu'un message est reçu.
+     * TODO : faire le systeme d'attente de message de la part de l'arduino pour lancer une autre impression
      */
     public static void setMessageListener(Consumer<String> listener) {
         messageListener = listener;
