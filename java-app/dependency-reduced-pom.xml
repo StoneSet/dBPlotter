@@ -1,76 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>com.dlraudio</groupId>
   <artifactId>dbPlotter</artifactId>
-  <version>1.0-SNAPSHOT</version>
   <name>dB Plotter</name>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <junit.version>5.10.0</junit.version>
-  </properties>
-
-  <dependencies>
-    <!-- JavaFX -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>17.0.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-fxml</artifactId>
-      <version>17.0.6</version>
-    </dependency>
-
-    <!-- FormsFX -->
-    <dependency>
-      <groupId>com.dlsc.formsfx</groupId>
-      <artifactId>formsfx-core</artifactId>
-      <version>11.6.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.openjfx</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- Communication Série (Arduino) -->
-    <dependency>
-      <groupId>com.fazecast</groupId>
-      <artifactId>jSerialComm</artifactId>
-      <version>2.9.3</version>
-    </dependency>
-
-    <!-- JUnit 5 -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
+  <version>1.0-SNAPSHOT</version>
+  <licenses>
+    <license>
+      <name>GNU General Public License v3.0</name>
+      <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+    </license>
+  </licenses>
   <build>
     <plugins>
-      <!-- Compilation Java -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
@@ -78,8 +21,6 @@
           <target>${maven.compiler.target}</target>
         </configuration>
       </plugin>
-
-      <!-- Plugin JavaFX -->
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
@@ -94,10 +35,7 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Création du fichier JAR -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
@@ -106,8 +44,6 @@
           </archive>
         </configuration>
       </plugin>
-
-      <!-- JAR avec dépendances -->
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.1</version>
@@ -119,7 +55,7 @@
             </goals>
             <configuration>
               <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer>
                   <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
                 </transformer>
               </transformers>
@@ -127,8 +63,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Génération d'un exécutable Windows -->
       <plugin>
         <groupId>com.akathist.maven.plugins.launch4j</groupId>
         <artifactId>launch4j-maven-plugin</artifactId>
@@ -171,8 +105,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Packager en ZIP -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.7.1</version>
@@ -191,8 +123,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- Plugin pour exécuter l'application -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -201,15 +131,50 @@
           <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
-
-  <licenses>
-    <license>
-      <name>GNU General Public License v3.0</name>
-      <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
-    </license>
-  </licenses>
-
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.10.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>opentest4j</artifactId>
+          <groupId>org.opentest4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-platform-commons</artifactId>
+          <groupId>org.junit.platform</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>apiguardian-api</artifactId>
+          <groupId>org.apiguardian</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.10.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-platform-engine</artifactId>
+          <groupId>org.junit.platform</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>apiguardian-api</artifactId>
+          <groupId>org.apiguardian</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+  <properties>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.10.0</junit.version>
+  </properties>
 </project>

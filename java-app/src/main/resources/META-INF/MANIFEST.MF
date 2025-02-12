@@ -1,0 +1,2 @@
+Main-Class: com.dlraudio.dbplotter.MainApp
+Class-Path: lib/
