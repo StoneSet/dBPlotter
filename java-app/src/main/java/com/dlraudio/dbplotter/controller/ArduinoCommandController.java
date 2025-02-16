@@ -17,12 +17,6 @@ public class ArduinoCommandController {
         this.progressListener = listener;
     }
 
-    public boolean isConnected() {
-        return true;
-        //test purpose
-        //return SerialPortUtils.isConnected();
-    }
-
     /**
      * Arrête immédiatement la transmission des données.
      */
@@ -36,18 +30,10 @@ public class ArduinoCommandController {
     public ArduinoCommandController() {}
 
     /**
-     * Configure le port COM et établit la connexion.
-     */
-    public void setupPort(String port) {
-        this.currentPort = port;
-        SerialPortUtils.connect(port, BAUD_RATE);
-    }
-
-    /**
      * Envoie une commande série à l'Arduino.
      */
     void sendCommand(String command) {
-        if (isConnected() && currentPort != null) {
+        if (SerialPortUtils.isConnected() && currentPort != null) {
             SerialPortUtils.writeToPort(command);
             System.out.println("Sent to Arduino: " + command);
         } else {
@@ -59,7 +45,7 @@ public class ArduinoCommandController {
      * Envoie les données du graphique à l'Arduino et convertit en tension DAC.
      */
     public void startDataTransmission(List<FrequencyData> dataPoints, double paperSpeedMmPerSec) {
-        if (!isConnected() || dataPoints == null || dataPoints.isEmpty()) {
+        if (!SerialPortUtils.isConnected() || dataPoints == null || dataPoints.isEmpty()) {
             System.err.println("No data to send or Arduino not connected.");
             return;
         }

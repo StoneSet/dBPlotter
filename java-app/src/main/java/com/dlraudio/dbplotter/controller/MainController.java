@@ -92,9 +92,6 @@ public class MainController {
     private boolean isCsvImported = false;
 
     private String selectedPort;
-    //for test purpose
-    private boolean isConnected = true;
-
 
     private PlottingService plottingService;
     private PlotParameters plotParameters;
@@ -115,16 +112,19 @@ public class MainController {
     }
 
     private void updateButtonStates() {
-        //boolean enableArduinoActions = SerialPortUtils.isConnected();
-        //test purpose
-        boolean enableArduinoActions = true;
+        boolean enableArduinoActions = SerialPortUtils.isConnected();
+
         boolean enableSendTo2306 = enableArduinoActions && isCsvImported;
 
         sendTo2306Button.setDisable(!enableSendTo2306);
         stopButton.setDisable(!enableArduinoActions);
         paperPushButton.setDisable(!enableArduinoActions);
         autoCalibrateButton.setDisable(!enableArduinoActions);
+
+        connectMenuItem.setDisable(enableArduinoActions); // Désactiver si déjà connecté
+        disconnectMenuItem.setDisable(!enableArduinoActions); // Activer si connecté
     }
+
 
 
     private void disableSmoothingMenus(boolean disable) {
@@ -187,8 +187,12 @@ public class MainController {
 
     @FXML
     public void onConnect() {
+        if (SerialPortUtils.isConnected()) {
+            System.out.println("Already connected to " + selectedPort);
+            return;
+        }
+
         if (selectedPort != null && SerialPortUtils.connect(selectedPort, 115200)) {
-            arduinoController.setupPort(selectedPort);
             statusLabel.setText("Connected");
             System.out.println("Connected to " + selectedPort);
         } else {
@@ -201,7 +205,6 @@ public class MainController {
     @FXML
     public void onDisconnect() {
         SerialPortUtils.disconnect();
-        isConnected = false;
         updateButtonStates();
         statusLabel.setText("Disconnected.");
         connectMenuItem.setDisable(false);
@@ -320,7 +323,7 @@ public class MainController {
 
     @FXML
     public void onSendTo2306() {
-        if (isConnected) {
+        if (SerialPortUtils.isConnected()) {
             List<FrequencyData> dataPoints = plottingService.getCurrentData();
             if (dataPoints == null || dataPoints.isEmpty()) {
                 System.err.println("No data available for transmission.");
@@ -359,7 +362,7 @@ public class MainController {
 
     @FXML
     private void onStop() {
-        if (isConnected) {
+        if (SerialPortUtils.isConnected()) {
             arduinoController.stopTransmission();
             arduinoController.stopMotor();
             System.out.println("Stop command sent to Arduino.");
@@ -371,7 +374,7 @@ public class MainController {
 
     @FXML
     private void onPaperPush() {
-        if (isConnected) {
+        if (SerialPortUtils.isConnected()) {
             arduinoController.sendPwmFrequency(10);
             arduinoController.sendCommand("PAPER_PUSH");
             System.out.println("Paper Push command sent.");
@@ -383,7 +386,7 @@ public class MainController {
 
     @FXML
     private void onAutoCalibrate() {
-        if (isConnected) {
+        if (SerialPortUtils.isConnected()) {
             System.out.println("Starting Auto Calibration...");
             statusLabel.setText("Auto Calibrating...");
 
