@@ -1,7 +1,7 @@
 #include <Wire.h>
 
 // Adresse I2C du DAC AD5693R
-#define DAC_ADDRESS 0x0C  
+#define DAC_ADDRESS 0x4C  
 
 // Broches de contrôle moteur et PWM
 #define MOTOR_PIN 2     // Contrôle du moteur via MOSFET ou relais
@@ -14,8 +14,6 @@ void setup() {
     Serial.begin(115200);
 
     Wire.begin();
-
-    delay(2000);
 
     pinMode(MOTOR_PIN, OUTPUT);
     pinMode(PWM_PIN, OUTPUT);
@@ -41,6 +39,7 @@ void loop() {
             stopMotor();
         } 
         else if (command.startsWith("DATA")) {
+            startMotor();
             handleData(command);
         }
         else if (command.startsWith("TTL_FREQ")) {

@@ -22,7 +22,7 @@ public class PrintSpeedCalculatorService {
         double maxFreq = FrequencyData.getMaxFrequency(dataPoints);
 
         // Facteur correctif basé sur la dynamique du balayage
-        double duration = (maxFreq - minFreq) * 0.1;
+        double duration = (maxFreq - minFreq) * 0.1; // 0.1s pour chaque décade de fréquence
         System.out.println("totalDurationSec: " + duration);
         return Math.max(duration, 10.0); // Minimum de 10s pour éviter une vitesse excessive
     }

@@ -1,5 +1,7 @@
 package com.dlraudio.dbplotter;
 
+import com.dlraudio.dbplotter.controller.ArduinoCommandController;
+import com.dlraudio.dbplotter.util.SerialPortUtils;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -8,6 +10,8 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
+
+    private static final ArduinoCommandController arduinoController = new ArduinoCommandController();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -25,7 +29,29 @@ public class MainApp extends Application {
 
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
+
+        primaryStage.setOnCloseRequest(event -> {
+            event.consume();
+            closeApplication();
+        });
+
         primaryStage.show();
+    }
+
+    public static void closeApplication() {
+        System.out.println("Closing application...");
+
+        if (arduinoController.isTransmissionOngoing()) {
+            System.out.println("Stopping ongoing transmission...");
+            arduinoController.stopTransmission();
+        }
+
+        if (SerialPortUtils.isConnected()) {
+            System.out.println("Disconnecting serial port...");
+            SerialPortUtils.disconnect();
+        }
+
+        System.exit(0);
     }
 
     public static void main(String[] args) {

@@ -7,12 +7,16 @@ import java.util.function.Consumer;
 
 public class SerialPortUtils {
 
+    private static final int BAUD_RATE = 115200;
+    private static String currentPort = null;
     private static SerialPort serialPort;
     private static Thread listenerThread;
     private static Consumer<String> messageListener;
-    private static boolean isListening = false; // Vérifier si le listener est actif
+    private static boolean isListening = false; //check if listener is running
 
-    // Lister les ports disponibles
+    /**
+     * Lister les ports série disponibles (listAvailablePorts)
+     */
     public static String[] listAvailablePorts() {
         SerialPort[] ports = SerialPort.getCommPorts();
         String[] portNames = new String[ports.length];
@@ -22,15 +26,17 @@ public class SerialPortUtils {
         return portNames;
     }
 
-    // Connecter au port série et attendre READY via le listener
-    public static boolean connect(String portName, int baudRate) {
+    /**
+     * Connecter au port série et attendre READY via le listener
+     */
+    public static boolean connect(String portName) {
         if (serialPort != null && serialPort.isOpen()) {
             System.out.println("Port already open: " + portName);
             return true;
         }
 
         serialPort = SerialPort.getCommPort(portName);
-        serialPort.setComPortParameters(baudRate, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+        serialPort.setComPortParameters(BAUD_RATE, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
         serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 1000, 1000);
 
         if (!serialPort.openPort()) {
@@ -38,6 +44,7 @@ public class SerialPortUtils {
             return false;
         }
 
+        currentPort = portName;
         System.out.println("Connected to " + portName + ". Waiting for Arduino reboot...");
 
         try {
@@ -80,16 +87,21 @@ public class SerialPortUtils {
         return true;
     }
 
-    // Déconnecter du port série
+    /**
+     * Déconnecter du port série (disconnect)
+     */
     public static void disconnect() {
         if (serialPort != null && serialPort.isOpen()) {
             serialPort.closePort();
+            currentPort = null;
             System.out.println("Disconnected from serial port.");
         }
         isListening = false;
     }
 
-    // Envoyer des données au port série (writeToPort)
+    /**
+     * Envoyer des données au port série (writeToPort)
+     */
     public static void writeToPort(String data) {
         if (serialPort != null && serialPort.isOpen()) {
             try {
@@ -105,8 +117,11 @@ public class SerialPortUtils {
         }
     }
 
-    // Vérifier si le port est connecté (isConnected)
+    /**
+     * Vérifier si le port est connecté (isConnected)
+     */
     public static boolean isConnected() {
+        //System.out.println("Port is open: " + (serialPort != null && serialPort.isOpen()));
         return serialPort != null && serialPort.isOpen();
     }
 

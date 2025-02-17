@@ -9,6 +9,12 @@
     -fx-border-width: 1;
 }
 
+.default-color0.chart-series-line { -fx-stroke: #ff0000; }
+.chart-series-line {
+    -fx-stroke-width: 1px;
+    -fx-effect: null;
+}
+
 /* Effet au survol */
 .button:hover {
     -fx-background-color: #e0e0e0;

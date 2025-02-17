@@ -4,12 +4,14 @@ import com.dlraudio.dbplotter.model.FrequencyData;
 import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public class ArduinoCommandController {
 
-    private static final int BAUD_RATE = 115200;
-    private String currentPort;
+    private Consumer<Double> remainingTimeListener;
     private Consumer<Double> progressListener;
     private volatile boolean isTransmitting = false;
 
@@ -17,23 +19,31 @@ public class ArduinoCommandController {
         this.progressListener = listener;
     }
 
+    public void setRemainingTimeListener(Consumer<Double> listener) {
+        this.remainingTimeListener = listener;
+    }
+
+    private void updateRemainingTime(int pointsLeft, double timePerPointMs) {
+        double remainingTimeSec = (pointsLeft * timePerPointMs) / 1000.0;
+        if (remainingTimeListener != null) {
+            remainingTimeListener.accept(remainingTimeSec);
+        }
+    }
+
     /**
      * Arrête immédiatement la transmission des données.
      */
     public void stopTransmission() {
         isTransmitting = false;
-        sendCommand("stopMotor");
         sendCommand("STOP");
         System.out.println("Data transmission stopped.");
     }
-
-    public ArduinoCommandController() {}
 
     /**
      * Envoie une commande série à l'Arduino.
      */
     void sendCommand(String command) {
-        if (SerialPortUtils.isConnected() && currentPort != null) {
+        if (SerialPortUtils.isConnected()) {
             SerialPortUtils.writeToPort(command);
             System.out.println("Sent to Arduino: " + command);
         } else {
@@ -56,12 +66,12 @@ public class ArduinoCommandController {
         }
 
         isTransmitting = true;
-
-        // Calcul du temps entre chaque point en ms
         double timePerPointMs = PrintSpeedCalculatorService.calculateTimePerPoint(paperSpeedMmPerSec);
         System.out.println("Time per point: " + timePerPointMs + " ms");
 
-        new Thread(() -> {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Future<?> future = executor.submit(() -> {
             int totalPoints = dataPoints.size();
             for (int i = 0; i < totalPoints; i++) {
                 if (!isTransmitting) {
@@ -69,29 +79,39 @@ public class ArduinoCommandController {
                     break;
                 }
 
+                updateRemainingTime(totalPoints - i, timePerPointMs);
                 double voltage = mapToVoltage(dataPoints.get(i).getMagnitude());
                 sendCommand(String.format("DATA %.2f", voltage));
 
-                // Notifier MainController via callback
-                double progress = (double) (i + 1) / totalPoints;
                 if (progressListener != null) {
-                    progressListener.accept(progress);
+                    progressListener.accept((double) (i + 1) / totalPoints);
                 }
 
-                // Pause ajustée dynamiquement
                 try {
                     Thread.sleep((long) timePerPointMs);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    System.out.println("Transmission interrupted.");
+                    break;
                 }
             }
 
             if (isTransmitting && progressListener != null) {
-                progressListener.accept(1.0); // Transmission terminée
+                progressListener.accept(1.0);
             }
 
             System.out.println("All data points sent.");
-        }).start();
+        });
+
+        executor.shutdown();
+
+        try {
+            future.get(); // Bloque jusqu'à la fin de la tâche
+        } catch (Exception e) {
+            System.err.println("Error during transmission: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("Transmission complete.");
     }
 
 
@@ -124,7 +144,20 @@ public class ArduinoCommandController {
      * Commande pour arrêter l'impression.
      */
     public void stopMotor() {
-
         sendCommand("STOP_MOTOR");
+    }
+
+    public void paperPush() {
+        sendPwmFrequency(10);
+        startMotor();
+    }
+
+    public void emergencyStop() {
+        stopMotor();
+        stopTransmission();
+    }
+
+    public boolean isTransmissionOngoing() {
+        return isTransmitting;
     }
 }

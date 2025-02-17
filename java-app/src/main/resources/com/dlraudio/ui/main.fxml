@@ -9,6 +9,7 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <VBox fx:controller="com.dlraudio.dbplotter.controller.MainController" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1">
   <children>
     <!-- MenuBar avec icônes -->
@@ -17,7 +18,13 @@
         <Menu text="File">
           <items>
             <MenuItem onAction="#onExit" text="Exit">
-              <graphic><ImageView fx:id="iconExit" /></graphic>
+              <graphic>
+                <ImageView>
+                  <image>
+                    <Image url="@images/cross.png"/>
+                  </image>
+                </ImageView>
+              </graphic>
             </MenuItem>
           </items>
         </Menu>
@@ -25,6 +32,13 @@
           <items>
             <!-- Menu déroulant pour la sélection des ports COM -->
             <Menu fx:id="selectComPortMenu" text="Select COM Port" onShowing="#onSelectComPortMenuShown">
+              <graphic>
+                <ImageView>
+                  <image>
+                    <Image url="@images/serial.png"/>
+                  </image>
+                </ImageView>
+              </graphic>
               <items>
                 <!-- Placeholder -->
                 <MenuItem text="Refreshing ports..." disable="true" />
@@ -50,7 +64,15 @@
 
         <Menu text="Help">
           <items>
-            <MenuItem onAction="#onAbout" text="About" />
+            <MenuItem onAction="#onAbout" text="About">
+              <graphic>
+                <ImageView>
+                  <image>
+                    <Image url="@images/info.png"/>
+                  </image>
+                </ImageView>
+              </graphic>
+            </MenuItem>
           </items>
         </Menu>
       </menus>
@@ -73,7 +95,12 @@
             <children>
               <Button onAction="#onImportCsvRew" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV REW" GridPane.columnIndex="1" GridPane.rowIndex="1" />
               <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="184.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
+              <HBox spacing="5" GridPane.columnSpan="2" GridPane.rowIndex="2">
+                <Label text="Current file:" />
+                <Label fx:id="currentFileLabel" text="None" />
+              </HBox>
             </children>
+
           </GridPane>
 
           <!-- Groupe Fonctions -->
@@ -123,7 +150,7 @@
       <VBox spacing="10">
         <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
         <Label style="-fx-font-weight: bold;" text="Graph Preview" />
-        <LineChart fx:id="lineChart" createSymbols="false" style="-fx-stroke-width: 1.0;" prefHeight="163.0" prefWidth="780.0" VBox.vgrow="ALWAYS">
+        <LineChart fx:id="lineChart" createSymbols="false" prefHeight="163.0" prefWidth="780.0" VBox.vgrow="ALWAYS">
           <xAxis>
             <NumberAxis label="Frequency (Hz)" tickUnit="1000" />
           </xAxis>
@@ -142,12 +169,17 @@
         <Label text="Status: " />
         <Label fx:id="statusLabel" text="Disconnected" />
         <Region HBox.hgrow="ALWAYS" />
+        <Label text="Remaining time: " />
+        <Label fx:id="remainingTimeLabel" text="None" />
+        <Region HBox.hgrow="ALWAYS" />
         <Label text="Port: " />
         <Label fx:id="portLabel" text="Not Selected" />
-        <Region HBox.hgrow="ALWAYS" />
-        <Label text="Current file: " />
-        <Label fx:id="currentFileLabel" text="None" />
       </children>
+      <ImageView fx:id="dacStatusIcon" fitHeight="20" fitWidth="20">
+        <image>
+          <Image url="@images/pc_disconnected.png"/>
+        </image>
+      </ImageView>
     </HBox>
 
   </children>
