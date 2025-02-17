@@ -25,7 +25,7 @@ Compatible with macOS, Windows, Linux, see the release section.
 
 ## 📸 GUI Overview
 
-![image](https://github.com/user-attachments/assets/bd29330f-5cbf-48db-832a-eec2f704b8ae)
+![image](https://github.com/user-attachments/assets/258db20b-a82e-4e55-808d-23092341b1be)
 
 ## 🔌 Interface Overview
 
