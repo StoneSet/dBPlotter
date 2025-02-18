@@ -1,4 +1,4 @@
-# DB Plotter Application 🎶📈
+# dBPlotter Application 🎶📈
 
 ![Java](https://img.shields.io/badge/Java-17-blue.svg) ![JavaFX](https://img.shields.io/badge/JavaFX-17-orange.svg) ![License](https://img.shields.io/badge/License-MIT-green.svg) ![Version](https://img.shields.io/badge/Version-0.0.1-blue.svg) 
 
@@ -25,7 +25,7 @@ Compatible with macOS, Windows, Linux, see the release section.
 
 ## 📸 GUI Overview
 
-![image](https://github.com/user-attachments/assets/258db20b-a82e-4e55-808d-23092341b1be)
+![image](https://github.com/user-attachments/assets/d4034e61-a03a-47c2-be46-a15ba75b4b5b)
 
 ## 🔌 Interface Overview
 
