@@ -173,11 +173,8 @@
   </dependencies>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
-    <project.description>Print audio curves on BandK 2306 Level Recorder.</project.description>
-    <project.organization.name>DLR Audio</project.organization.name>
     <maven.compiler.source>17</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.inceptionYear>2025</project.inceptionYear>
     <junit.version>5.10.0</junit.version>
   </properties>
 </project>

@@ -15,28 +15,28 @@ public class ArduinoCommandController {
     private Consumer<Double> progressListener;
     private volatile boolean isTransmitting = false;
 
+    /**
+     * Définit un écouteur pour la progression de la transmission des données.
+     */
     public void setProgressListener(Consumer<Double> listener) {
         this.progressListener = listener;
     }
 
+    /**
+     * Définit un écouteur pour le temps restant estimé de la transmission des données.
+     */
     public void setRemainingTimeListener(Consumer<Double> listener) {
         this.remainingTimeListener = listener;
     }
 
+    /**
+     * Met à jour le temps restant estimé pour la transmission des données.
+     */
     private void updateRemainingTime(int pointsLeft, double timePerPointMs) {
         double remainingTimeSec = (pointsLeft * timePerPointMs) / 1000.0;
         if (remainingTimeListener != null) {
             remainingTimeListener.accept(remainingTimeSec);
         }
-    }
-
-    /**
-     * Arrête immédiatement la transmission des données.
-     */
-    public void stopTransmission() {
-        isTransmitting = false;
-        sendCommand("STOP");
-        System.out.println("Data transmission stopped.");
     }
 
     /**
@@ -71,6 +71,8 @@ public class ArduinoCommandController {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
+        startMotor(paperSpeedMmPerSec);
+
         Future<?> future = executor.submit(() -> {
             int totalPoints = dataPoints.size();
             for (int i = 0; i < totalPoints; i++) {
@@ -98,7 +100,6 @@ public class ArduinoCommandController {
             if (isTransmitting && progressListener != null) {
                 progressListener.accept(1.0);
             }
-
             System.out.println("All data points sent.");
         });
 
@@ -110,10 +111,10 @@ public class ArduinoCommandController {
             System.err.println("Error during transmission: " + e.getMessage());
             e.printStackTrace();
         }
-
+        isTransmitting = false;
+        stopMotor();
         System.out.println("Transmission complete.");
     }
-
 
     /**
      * Convertit les valeurs de dB en tension pour le DAC.
@@ -127,17 +128,48 @@ public class ArduinoCommandController {
     }
 
     /**
-     * Envoie une fréquence TTL au moteur.
+     * Démarre le moteur et configure immédiatement la vitesse en mm/s.
+     * La vitesse est convertie en fréquence pour le moteur.
+     * Vitesse minimale : 0.01 mm/s
+     * Vitesse maximale : 30 mm/s
+     * @param paperSpeedMmPerSec Vitesse du papier en mm/s
+     *                           (1 mm/s correspond à 10 Hz pour le moteur)
      */
-    public void sendPwmFrequency(int frequency) {
-        sendCommand(String.format("TTL_FREQ %d", frequency));
+    public void startMotor(double paperSpeedMmPerSec) {
+        if (paperSpeedMmPerSec < 0.01 || paperSpeedMmPerSec > 30) {
+            System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Must be >= 0.01 and <= 30.");
+            return;
+        }
+
+        // Conversion mm/s → Hz
+        double frequency = paperSpeedMmPerSec * 10; // A VERIFIER !! Supposons que 1 mm/s correspond à 10 Hz
+
+        frequency = Math.min(frequency, 350);
+
+        String formattedFrequency = String.format("%.2f", frequency);
+
+        sendCommand("START_MOTOR " + formattedFrequency);
+        System.out.println("Start motor command sent at " + formattedFrequency + " Hz.");
     }
 
     /**
-     * Commande pour démarrer le moteur d'impression.
+     * Commande pour pousser le papier sur un temps défini.
      */
-    public void startMotor() {
-        sendCommand("START_MOTOR");
+    public void paperPush(double paperSpeed, int durationMs) {
+
+        System.out.println("Pushing paper at " + paperSpeed + " mm/s for " + (durationMs / 1000.0) + " sec");
+
+        startMotor(paperSpeed);
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(durationMs);
+            } catch (InterruptedException e) {
+                System.err.println("Paper push interrupted.");
+            }
+            stopMotor();
+            System.out.println("Paper push complete.");
+        }).start();
     }
 
     /**
@@ -147,16 +179,26 @@ public class ArduinoCommandController {
         sendCommand("STOP_MOTOR");
     }
 
-    public void paperPush() {
-        sendPwmFrequency(10);
-        startMotor();
-    }
-
+    /**
+     * Arrête immédiatement le moteur et la transmission des données.
+     */
     public void emergencyStop() {
         stopMotor();
         stopTransmission();
     }
 
+    /**
+     * Arrête immédiatement la transmission des données.
+     */
+    public void stopTransmission() {
+        isTransmitting = false;
+        sendCommand("STOP");
+        System.out.println("Data transmission stopped.");
+    }
+
+    /**
+     * Vérifie si une transmission est en cours.
+     */
     public boolean isTransmissionOngoing() {
         return isTransmitting;
     }

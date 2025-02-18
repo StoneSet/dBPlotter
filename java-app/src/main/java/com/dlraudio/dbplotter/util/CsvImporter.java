@@ -74,7 +74,7 @@ public class CsvImporter {
         }
 
         System.out.println("Total data points imported: " + dataPoints.size());
-        return dataPoints;
+        return conditionData(dataPoints);
     }
 
     /**
@@ -114,6 +114,22 @@ public class CsvImporter {
         }
 
         System.out.println("Total data points imported: " + dataPoints.size());
-        return dataPoints;
+        return conditionData(dataPoints);
+    }
+
+    /**
+     * Filtre les données pour ne conserver que les fréquences entre 10 Hz et 22 kHz.
+     */
+    private List<FrequencyData> conditionData(List<FrequencyData> rawData) {
+        List<FrequencyData> filteredData = new ArrayList<>();
+
+        for (FrequencyData data : rawData) {
+            if (data.getFrequency() >= 10 && data.getFrequency() <= 22000) {
+                filteredData.add(data);
+            }
+        }
+
+        System.out.println("Filtered data points (10Hz - 22kHz): " + filteredData.size());
+        return filteredData;
     }
 }

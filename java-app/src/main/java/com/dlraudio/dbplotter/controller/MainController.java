@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class MainController {
@@ -42,37 +44,26 @@ public class MainController {
     private ImageView dacStatusIcon;
     @FXML
     private MenuItem connectMenuItem;
-
     @FXML
     private MenuItem disconnectMenuItem;
-
     @FXML
     private Label statusLabel;
-
     @FXML
     private Label minFrequencyField;
-
     @FXML
     private Label maxFrequencyField;
-
     @FXML
     private Label minDbField;
-
     @FXML
     private Label maxDbField;
-
     @FXML
     private Label paperSpeedField;
-
     @FXML
     private Label portLabel;
-
     @FXML
     private ProgressBar progressBar;
-
     @FXML
     private LineChart<Number, Number> lineChart;
-
     @FXML
     private MenuItem smoothing1OctaveMenuItem;
     @FXML
@@ -97,12 +88,11 @@ public class MainController {
     private Button autoCalibrateButton;
 
     private boolean isCsvImported = false;
-
     private String selectedPort;
-
     private PlottingService plottingService;
     private PlotParameters plotParameters;
-
+    private double importedPaperSpeedMmPerSec = 0.0;
+    private double currentPaperSpeedMmPerSec = 0.0;
     private final ArduinoCommandController arduinoController = new ArduinoCommandController();
 
     @FXML
@@ -307,30 +297,30 @@ public class MainController {
             CsvImporter csvImportService = new CsvImporter();
             List<FrequencyData> dataPoints;
 
-            // Importation des données CSV selon le type de fichier
             if (type.equalsIgnoreCase("rew")) {
                 dataPoints = csvImportService.importFromRew(csvFile);
             } else {
                 dataPoints = csvImportService.importFromArta(csvFile);
             }
 
-            // Vérification et affichage des données brutes
             if (dataPoints != null && !dataPoints.isEmpty()) {
                 plottingService.plotData(dataPoints);
 
-                // Mise à jour des paramètres calculés
                 updateCalculatedParameters(dataPoints);
+                double estimatedDurationSec = PrintSpeedCalculatorService.getTotalDuration(dataPoints);
+                importedPaperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(dataPoints.size(), estimatedDurationSec);
+                currentPaperSpeedMmPerSec = importedPaperSpeedMmPerSec;
 
-                // Activer les menus de smoothing
+                paperSpeedField.setText(String.format("%.2f mm/s", importedPaperSpeedMmPerSec));
+
                 disableSmoothingMenus(false);
 
                 currentFileLabel.setText(csvFile.getName());
-                isCsvImported = true;  // Fichier CSV importé
-                updateButtonStates();  // Mise à jour des boutons
-                // Mise à jour du statut
+                isCsvImported = true;
+                updateButtonStates();
+
                 statusLabel.setText("CSV data imported and plotted.");
 
-                // Stocker les données brutes dans le service pour un éventuel lissage
                 plottingService.setCurrentData(dataPoints);
             } else {
                 statusLabel.setText("No data found in the CSV file.");
@@ -408,11 +398,10 @@ public class MainController {
                 return;
             }
 
-            double estimatedDurationSec = PrintSpeedCalculatorService.getTotalDuration(dataPoints);
-            double paperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(dataPoints.size(), estimatedDurationSec);
+            double paperSpeedToUse = importedPaperSpeedMmPerSec;
 
-            if (paperSpeedMmPerSec <= 0) {
-                System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Cannot proceed.");
+            if (paperSpeedToUse <= 0) {
+                System.err.println("Invalid paper speed: " + paperSpeedToUse + " mm/s. Cannot proceed.");
                 return;
             }
 
@@ -424,8 +413,7 @@ public class MainController {
             Task<Void> sendTask = new Task<>() {
                 @Override
                 protected Void call() {
-                    arduinoController.startMotor();
-                    arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
+                    arduinoController.startDataTransmission(dataPoints, paperSpeedToUse);
                     return null;
                 }
 
@@ -502,13 +490,12 @@ public class MainController {
             Task<Void> paperPushTask = new Task<>() {
                 @Override
                 protected Void call() {
-                    arduinoController.paperPush();
+                    arduinoController.paperPush(1, 2000);
                     return null;
                 }
 
                 @Override
                 protected void succeeded() {
-                    System.out.println("Tdzefgzerg.");
                     Platform.runLater(() -> setButtonsDisabled(false));
                     statusLabel.setText("Paper push completed.");
                 }
@@ -520,7 +507,9 @@ public class MainController {
                 }
             };
 
-            new Thread(paperPushTask).start();
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            executor.submit(paperPushTask);
+            executor.shutdown();
         } else {
             System.err.println("Cannot push paper: Arduino is not connected.");
         }
@@ -540,7 +529,6 @@ public class MainController {
                 protected Void call() {
                     int totalPoints = 100;
                     double estimatedDurationSec = 10.0;
-                    double paperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(totalPoints, estimatedDurationSec);
 
                     List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, 2.5, 2.5);
                     List<FrequencyData> dataPoints = testWave.stream()
@@ -548,12 +536,11 @@ public class MainController {
                             .toList();
 
                     Platform.runLater(() -> {
-                        paperSpeedField.setText(String.format("%.2f mm/s", paperSpeedMmPerSec));
-                        updateCalculatedParameters(dataPoints);
                         progressBar.setProgress(0);
                     });
 
-                    arduinoController.startDataTransmission(dataPoints, paperSpeedMmPerSec);
+                    double calibrationSpeed = PrintSpeedCalculatorService.calculatePaperSpeed(totalPoints, estimatedDurationSec);
+                    arduinoController.startDataTransmission(dataPoints, calibrationSpeed);
 
                     return null;
                 }

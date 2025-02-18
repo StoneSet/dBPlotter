@@ -38,7 +38,6 @@ public class PlottingService {
         lineChart.getData().clear();
         lineChart.getData().add(series);
 
-        // Stocker les données actuelles
         currentData = new ArrayList<>(dataPoints);
     }
 

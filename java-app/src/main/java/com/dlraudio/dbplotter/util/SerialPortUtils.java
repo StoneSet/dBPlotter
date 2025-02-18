@@ -136,7 +136,7 @@ public class SerialPortUtils {
      * Écoute en continu les messages du port série.
      */
     private static void startListening() {
-        if (isListening) return; // Ne pas démarrer plusieurs threads
+        if (isListening) return;
 
         isListening = true;
         listenerThread = new Thread(() -> {
