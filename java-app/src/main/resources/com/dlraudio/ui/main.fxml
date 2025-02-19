@@ -175,6 +175,16 @@
         <Label text="Port: " />
         <Label fx:id="portLabel" text="Not Selected" />
       </children>
+      <ImageView fx:id="txActivity" fitHeight="16" fitWidth="16">
+        <image>
+          <Image url="@images/red_light.png"/>
+        </image>
+        </ImageView>
+      <ImageView fx:id="rxActivity" fitHeight="16" fitWidth="16">
+        <image>
+          <Image url="@images/red_light.png"/>
+        </image>
+      </ImageView>
       <ImageView fx:id="dacStatusIcon" fitHeight="20" fitWidth="20">
         <image>
           <Image url="@images/pc_disconnected.png"/>
