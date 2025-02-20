@@ -1,8 +1,8 @@
 module com.dlraudio.dbplotter {
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.graphics;
 
-    requires com.dlsc.formsfx;
     requires com.fazecast.jSerialComm;
     requires java.desktop;
 
