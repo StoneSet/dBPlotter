@@ -3,16 +3,20 @@ package com.dlraudio.dbplotter.util;
 import com.fazecast.jSerialComm.SerialPort;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 public class SerialPortUtils {
 
-    private static final int BAUD_RATE = 115200;
+    private static final int BAUD_RATE = 9600;
     private static String currentPort = null;
     private static SerialPort serialPort;
     private static Thread listenerThread;
     private static Consumer<String> messageListener;
     private static boolean isListening = false; //check if listener is running
+    private static final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+
 
     /**
      * Lister les ports série disponibles (listAvailablePorts)
@@ -133,12 +137,27 @@ public class SerialPortUtils {
     }
 
     /**
-     * Écoute en continu les messages du port série.
+     * Lit une ligne du port série de manière bloquante (avec timeout).
+     */
+    public static String readBlocking(long timeoutMs) {
+        try {
+            String message = messageQueue.poll(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (message != null) {
+                System.out.println("[RX Blocking] " + message); // ✅ Log du message lu
+            }
+            return message;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    /**
+     * Démarre un thread unique pour écouter les messages série et les stocker.
      */
     private static void startListening() {
-        if (isListening) return;
+        if (listenerThread != null && listenerThread.isAlive()) return;
 
-        isListening = true;
         listenerThread = new Thread(() -> {
             try {
                 InputStream inputStream = serialPort.getInputStream();
@@ -148,8 +167,12 @@ public class SerialPortUtils {
                     int numBytes = inputStream.read(buffer);
                     if (numBytes > 0) {
                         String received = new String(buffer, 0, numBytes).trim();
-                        System.out.println("Received: " + received);
+                        System.out.println("[RX Listening] Received: " + received);
 
+                        // ✅ Stocker les messages pour `readBlocking()`
+                        messageQueue.offer(received);
+
+                        // ✅ Notifier un listener si défini
                         if (messageListener != null) {
                             messageListener.accept(received);
                         }
@@ -157,8 +180,6 @@ public class SerialPortUtils {
                 }
             } catch (Exception e) {
                 System.err.println("Error in serial listening: " + e.getMessage());
-            } finally {
-                isListening = false; // Assurer que l'état est correct si le thread s'arrête
             }
         });
 

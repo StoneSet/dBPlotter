@@ -1,8 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>com.dlraudio</groupId>
   <artifactId>dbPlotter</artifactId>
   <version>1.0-SNAPSHOT</version>
@@ -12,27 +14,56 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <javafx.version>17</javafx.version>
-    <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
+    <junit.version>5.10.0</junit.version>
   </properties>
 
   <dependencies>
+    <!-- JavaFX -->
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
+      <version>17.0.6</version>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-fxml</artifactId>
-      <version>${javafx.version}</version>
+      <version>17.0.6</version>
     </dependency>
+
+    <!-- FormsFX -->
+    <dependency>
+      <groupId>com.dlsc.formsfx</groupId>
+      <artifactId>formsfx-core</artifactId>
+      <version>11.6.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <!-- Communication Série (Arduino) -->
     <dependency>
       <groupId>com.fazecast</groupId>
       <artifactId>jSerialComm</artifactId>
       <version>2.9.3</version>
     </dependency>
+
+    <!-- JUnit 5 -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -43,30 +74,22 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>17</source>
-          <target>17</target>
-          <release>17</release>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
         </configuration>
       </plugin>
 
-      <!-- JavaFX Plugin : Pour exécuter et construire l'image JLink -->
+      <!-- Plugin JavaFX -->
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
-        <version>${javafx.maven.plugin.version}</version>
+        <version>0.0.8</version>
         <executions>
           <execution>
             <id>default-cli</id>
-            <goals>
-              <goal>jlink</goal>
-            </goals>
             <configuration>
-              <launcher>dbplotter</launcher>
-              <stripDebug>true</stripDebug>
-              <compress>2</compress>
-              <noHeaderFiles>true</noHeaderFiles>
-              <noManPages>true</noManPages>
-              <bindServices>true</bindServices>
+              <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
+              <launcher>app</launcher>
             </configuration>
           </execution>
         </executions>
@@ -79,40 +102,106 @@
         <version>3.1.0</version>
         <configuration>
           <archive>
-            <manifest>
-              <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
-            </manifest>
+            <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
           </archive>
         </configuration>
       </plugin>
 
-      <!-- Plugin JPackage pour créer un .exe -->
+      <!-- JAR avec dépendances -->
       <plugin>
-        <groupId>org.panteleyev</groupId>
-        <artifactId>jpackage-maven-plugin</artifactId>
-        <version>1.6.4</version>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
         <executions>
           <execution>
-            <id>win</id>
             <phase>package</phase>
             <goals>
-              <goal>jpackage</goal>
+              <goal>shade</goal>
             </goals>
             <configuration>
-              <name>dbPlotter</name>
-              <appVersion>1.0</appVersion>
-              <vendor>DLR Audio</vendor>
-              <runtimeImage>${project.build.directory}/runtime</runtimeImage>
-              <type>app-image</type>
-              <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
-              <icon>src/main/resources/com/dlraudio/ui/images/icon.ico</icon>
-              <winMenu>true</winMenu>
-              <winShortcut>true</winShortcut>
-              <type>exe</type>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
         </executions>
       </plugin>
+
+      <!-- Génération d'un exécutable Windows -->
+      <plugin>
+        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+        <artifactId>launch4j-maven-plugin</artifactId>
+        <version>2.5.0</version>
+        <executions>
+          <execution>
+            <id>l4j-clui</id>
+            <phase>package</phase>
+            <goals>
+              <goal>launch4j</goal>
+            </goals>
+            <configuration>
+              <icon>src/main/resources/com/dlraudio/ui/images/icon.ico</icon>
+              <headerType>gui</headerType>
+              <outfile>target/dbPlotter.exe</outfile>
+              <jar>target/dbPlotter-1.0-SNAPSHOT.jar</jar>
+              <errTitle>dB Plotter</errTitle>
+              <classPath>
+                <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
+                <addDependencies>false</addDependencies>
+                <preCp>anything</preCp>
+              </classPath>
+              <jre>
+                <minVersion>1.8.0</minVersion>
+                <opts>
+                  <opt>-Djava.endorsed.dirs=./endorsed</opt>
+                </opts>
+              </jre>
+              <versionInfo>
+                <fileVersion>1.0.0.0</fileVersion>
+                <language>French</language>
+                <fileDescription>dB Plotter - Audio Measurement Tool</fileDescription>
+                <copyright>Valentin Derouet</copyright>
+                <productVersion>1.0.0.0</productVersion>
+                <productName>dB Plotter</productName>
+                <internalName>dbPlotter</internalName>
+                <originalFilename>dbPlotter.exe</originalFilename>
+              </versionInfo>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Packager en ZIP -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.7.1</version>
+        <executions>
+          <execution>
+            <id>make-zip</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>assembly.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Plugin pour exécuter l'application -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <mainClass>com.dlraudio.dbplotter.MainApp</mainClass>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -122,4 +211,5 @@
       <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
     </license>
   </licenses>
+
 </project>

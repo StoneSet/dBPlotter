@@ -4,6 +4,7 @@ import com.dlraudio.dbplotter.model.FrequencyData;
 import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -54,6 +55,9 @@ public class ArduinoCommandController {
     /**
      * Envoie les données du graphique à l'Arduino et convertit en tension DAC.
      */
+    /**
+     * Envoie les données du graphique à l'Arduino et convertit en tension DAC.
+     */
     public void startDataTransmission(List<FrequencyData> dataPoints, double paperSpeedMmPerSec) {
         if (!SerialPortUtils.isConnected() || dataPoints == null || dataPoints.isEmpty()) {
             System.err.println("No data to send or Arduino not connected.");
@@ -71,7 +75,11 @@ public class ArduinoCommandController {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        startMotor(paperSpeedMmPerSec);
+        if (!startMotor(paperSpeedMmPerSec)) {
+            System.err.println("Motor failed to start. Aborting transmission.");
+            isTransmitting = false;
+            return;
+        }
 
         Future<?> future = executor.submit(() -> {
             int totalPoints = dataPoints.size();
@@ -82,8 +90,12 @@ public class ArduinoCommandController {
                 }
 
                 updateRemainingTime(totalPoints - i, timePerPointMs);
-                double voltage = mapToVoltage(dataPoints.get(i).getMagnitude());
-                sendCommand(String.format("DATA %.2f", voltage));
+
+                // Conversion en valeur absolue et correction du format
+                double voltage = Math.abs(mapToVoltage(dataPoints.get(i).getMagnitude()));
+                String formattedVoltage = String.format(Locale.US, "DATA %.2f", voltage); // Locale US pour un point
+
+                sendCommand(formattedVoltage);
 
                 if (progressListener != null) {
                     progressListener.accept((double) (i + 1) / totalPoints);
@@ -116,6 +128,7 @@ public class ArduinoCommandController {
         System.out.println("Transmission complete.");
     }
 
+
     /**
      * Convertit les valeurs de dB en tension pour le DAC.
      */
@@ -134,22 +147,30 @@ public class ArduinoCommandController {
      * Vitesse maximale : 30 mm/s
      * @param paperSpeedMmPerSec Vitesse du papier en mm/s
      *                           (1 mm/s correspond à 10 Hz pour le moteur)
+     * @return true si le moteur a bien démarré, false sinon.
      */
-    public void startMotor(double paperSpeedMmPerSec) {
+
+    public boolean startMotor(double paperSpeedMmPerSec) {
         if (paperSpeedMmPerSec < 0.01 || paperSpeedMmPerSec > 30) {
             System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Must be >= 0.01 and <= 30.");
-            return;
+            return false;
         }
 
         // Conversion mm/s → Hz
-        double frequency = paperSpeedMmPerSec * 10; // A VERIFIER !! Supposons que 1 mm/s correspond à 10 Hz
+        double frequency = Math.min(paperSpeedMmPerSec * 10, 350);
+        String formattedFrequency = String.format(Locale.US, "%.2f", frequency);
 
-        frequency = Math.min(frequency, 350);
+        SerialPortUtils.writeToPort("START_MOTOR " + formattedFrequency);
+        System.out.println("[CMD] Start motor command sent at " + formattedFrequency + " Hz.");
 
-        String formattedFrequency = String.format("%.2f", frequency);
+        // ✅ Attente de l'ACK "MOTOR_STARTED" pendant 5 secondes
+        boolean ackReceived = waitForACK("MOTOR_STARTED", 5000);
 
-        sendCommand("START_MOTOR " + formattedFrequency);
-        System.out.println("Start motor command sent at " + formattedFrequency + " Hz.");
+        if (!ackReceived) {
+            System.err.println("[ERROR] Motor did not start!");
+        }
+
+        return ackReceived;
     }
 
     /**
@@ -173,10 +194,41 @@ public class ArduinoCommandController {
     }
 
     /**
-     * Commande pour arrêter l'impression.
+     * Arrête le moteur et attend la confirmation "MOTOR_STOPPED".
+     * @return true si le moteur s'est arrêté, false sinon.
      */
-    public void stopMotor() {
-        sendCommand("STOP_MOTOR");
+    public boolean stopMotor() {
+        SerialPortUtils.writeToPort("STOP_MOTOR");
+        System.out.println("[CMD] Stop motor command sent.");
+
+        boolean ackReceived = waitForACK("MOTOR_STOPPED", 5000);
+
+        if (!ackReceived) {
+            System.err.println("[ERROR] Motor did not stop!");
+        }
+
+        return ackReceived;
+    }
+
+    /**
+     * Attend un ACK spécifique (ex: "MOTOR_STARTED") avec un timeout.
+     * @return true si l'ACK est reçu, false sinon.
+     */
+    private boolean waitForACK(String expectedResponse, int timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        System.out.println("[ACK] Waiting for " + expectedResponse + "...");
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            String response = SerialPortUtils.readBlocking(timeoutMs);
+
+            if (response != null && response.contains(expectedResponse)) {
+                System.out.println("[ACK] ✅ " + expectedResponse + " received!");
+                return true;
+            }
+        }
+
+        System.err.println("[ACK] ❌ Timeout waiting for " + expectedResponse);
+        return false;
     }
 
     /**
