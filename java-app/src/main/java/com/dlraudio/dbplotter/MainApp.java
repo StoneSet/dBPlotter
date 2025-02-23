@@ -9,6 +9,9 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class MainApp extends Application {
 
     private static final ArduinoCommandController arduinoController = new ArduinoCommandController();
@@ -26,6 +29,19 @@ public class MainApp extends Application {
         scene.getStylesheets().add(getClass().getResource("/com/dlraudio/ui/style.css").toExternalForm());
 
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
+
+
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            try {
+                Taskbar taskbar = Taskbar.getTaskbar();
+                ImageIcon icon = new ImageIcon(getClass().getResource("/com/dlraudio/ui/images/logo.png"));
+                taskbar.setIconImage(icon.getImage());
+
+            } catch (Exception e) {
+                System.err.println("Could not set Dock icon: " + e.getMessage());
+            }
+        }
+
 
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
@@ -55,6 +71,8 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
+
+        System.setProperty("javafx.application.name", "DB Plotter");
         launch(args);
     }
 }
