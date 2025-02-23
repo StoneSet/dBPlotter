@@ -61,6 +61,10 @@ public class MainController {
     @FXML
     private Label portLabel;
     @FXML
+    public ImageView txActivity;
+    @FXML
+    public ImageView rxActivity;
+    @FXML
     private ProgressBar progressBar;
     @FXML
     private LineChart<Number, Number> lineChart;
@@ -95,6 +99,16 @@ public class MainController {
     private double currentPaperSpeedMmPerSec = 0.0;
     private final ArduinoCommandController arduinoController = new ArduinoCommandController();
 
+    private static MainController instance;
+
+    public MainController() {
+        instance = this;
+    }
+
+    public static MainController getInstance() {
+        return instance;
+    }
+
     @FXML
     public void initialize() {
         disconnectMenuItem.setDisable(true);
@@ -110,6 +124,25 @@ public class MainController {
         );
 
         arduinoController.setRemainingTimeListener(this::updateRemainingTimeLabel);
+    }
+
+    /*
+     * Mise à jour de l'indicateur d'activité de transmission. (que ça soit TX ou RX)
+     */
+    public void blinkIndicator(ImageView indicator) {
+        Platform.runLater(() -> {
+            indicator.setImage(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/green_light.png")));
+        });
+
+        // repasser en rouge après 10 ms
+        new Thread(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {}
+            Platform.runLater(() -> {
+                indicator.setImage(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/red_light.png")));
+            });
+        }).start();
     }
 
 

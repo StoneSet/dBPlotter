@@ -1,6 +1,9 @@
 package com.dlraudio.dbplotter.util;
 
+import com.dlraudio.dbplotter.controller.MainController;
 import com.fazecast.jSerialComm.SerialPort;
+import javafx.application.Platform;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
@@ -110,9 +113,13 @@ public class SerialPortUtils {
         if (serialPort != null && serialPort.isOpen()) {
             try {
                 OutputStream outputStream = serialPort.getOutputStream();
-                outputStream.write(data.getBytes());
+                outputStream.write((data + "\n").getBytes());
                 outputStream.flush();
-                System.out.println("Data sent: " + data);
+                System.out.println("[TX] " + data);
+
+                // 🔹 Notifier l'UI que TX s'est produit
+                Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().txActivity));
+
             } catch (Exception e) {
                 System.err.println("Error sending data: " + e.getMessage());
             }
@@ -167,15 +174,15 @@ public class SerialPortUtils {
                     int numBytes = inputStream.read(buffer);
                     if (numBytes > 0) {
                         String received = new String(buffer, 0, numBytes).trim();
-                        System.out.println("[RX Listening] Received: " + received);
+                        System.out.println("[RX] " + received);
 
-                        // ✅ Stocker les messages pour `readBlocking()`
                         messageQueue.offer(received);
-
-                        // ✅ Notifier un listener si défini
                         if (messageListener != null) {
                             messageListener.accept(received);
                         }
+
+                        // 🔹 Notifier l'UI que RX s'est produit
+                        Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().rxActivity));
                     }
                 }
             } catch (Exception e) {
