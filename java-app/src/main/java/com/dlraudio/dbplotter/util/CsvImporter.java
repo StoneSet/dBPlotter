@@ -31,13 +31,9 @@ public class CsvImporter {
             while ((line = reader.readLine()) != null) {
                 line = line.strip();
                 //System.out.println("Read line: " + line);
-
-                // Ignorer les lignes de métadonnées ou vides
                 if (line.isEmpty()) {
                     continue;
                 }
-
-                // Détecter le début des données
                 if (!dataSectionStarted) {
                     // Supprimer l'astérisque et vérifier si c'est la ligne de titre
                     String cleanLine = line.startsWith("*") ? line.substring(1).trim() : line;
@@ -46,16 +42,12 @@ public class CsvImporter {
                         dataSectionStarted = true;
                         continue;
                     } else {
-                        //DEBUG
                         //System.out.println("Header not detected yet.");
                     }
                     continue;
                 }
-
-                // Lire les lignes de données
                 String[] values = line.split("\\s+");
                 //System.out.println("Split values: " + String.join(", ", values));
-
                 if (values.length >= 2) {
                     try {
                         double frequency = Double.parseDouble(values[0]);
@@ -89,8 +81,6 @@ public class CsvImporter {
 
             while ((line = reader.readLine()) != null) {
                 line = line.strip();
-
-                // Détecter la ligne de titre des colonnes
                 if (!dataSectionStarted && line.equalsIgnoreCase("Frequency(Hz), Magnitude(dB)")) {
                     dataSectionStarted = true;
                     continue;

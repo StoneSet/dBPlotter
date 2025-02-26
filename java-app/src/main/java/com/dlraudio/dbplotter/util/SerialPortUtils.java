@@ -84,13 +84,11 @@ public class SerialPortUtils {
                 e.printStackTrace();
             }
         }
-
         if (!isReady[0]) {
             System.err.println("Timeout: Arduino did not send READY.");
             disconnect();
             return false;
         }
-
         return true;
     }
 
@@ -117,7 +115,6 @@ public class SerialPortUtils {
                 outputStream.flush();
                 System.out.println("[TX] " + data);
 
-                // 🔹 Notifier l'UI que TX s'est produit
                 Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().txActivity));
 
             } catch (Exception e) {
@@ -180,8 +177,6 @@ public class SerialPortUtils {
                         if (messageListener != null) {
                             messageListener.accept(received);
                         }
-
-                        // 🔹 Notifier l'UI que RX s'est produit
                         Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().rxActivity));
                     }
                 }

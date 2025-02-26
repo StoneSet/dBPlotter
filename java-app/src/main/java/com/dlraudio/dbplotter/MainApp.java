@@ -30,7 +30,6 @@ public class MainApp extends Application {
 
         primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
 
-
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             try {
                 Taskbar taskbar = Taskbar.getTaskbar();
@@ -41,7 +40,6 @@ public class MainApp extends Application {
                 System.err.println("Could not set Dock icon: " + e.getMessage());
             }
         }
-
 
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
@@ -71,7 +69,6 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
-
         System.setProperty("javafx.application.name", "DB Plotter");
         launch(args);
     }

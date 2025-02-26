@@ -96,7 +96,6 @@ public class MainController {
     private PlottingService plottingService;
     private PlotParameters plotParameters;
     private double importedPaperSpeedMmPerSec = 0.0;
-    private double currentPaperSpeedMmPerSec = 0.0;
     private final ArduinoCommandController arduinoController = new ArduinoCommandController();
 
     private static MainController instance;
@@ -342,7 +341,6 @@ public class MainController {
                 updateCalculatedParameters(dataPoints);
                 double estimatedDurationSec = PrintSpeedCalculatorService.getTotalDuration(dataPoints);
                 importedPaperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(dataPoints.size(), estimatedDurationSec);
-                currentPaperSpeedMmPerSec = importedPaperSpeedMmPerSec;
 
                 paperSpeedField.setText(String.format("%.2f mm/s", importedPaperSpeedMmPerSec));
 

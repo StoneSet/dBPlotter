@@ -41,21 +41,6 @@ public class ArduinoCommandController {
     }
 
     /**
-     * Envoie une commande série à l'Arduino.
-     */
-    void sendCommand(String command) {
-        if (SerialPortUtils.isConnected()) {
-            SerialPortUtils.writeToPort(command);
-            System.out.println("Sent to Arduino: " + command);
-        } else {
-            System.err.println("Cannot send command. Arduino is not connected.");
-        }
-    }
-
-    /**
-     * Envoie les données du graphique à l'Arduino et convertit en tension DAC.
-     */
-    /**
      * Envoie les données du graphique à l'Arduino et convertit en tension DAC.
      */
     public void startDataTransmission(List<FrequencyData> dataPoints, double paperSpeedMmPerSec) {
@@ -90,12 +75,10 @@ public class ArduinoCommandController {
                 }
 
                 updateRemainingTime(totalPoints - i, timePerPointMs);
-
-                // Conversion en valeur absolue et correction du format
                 double voltage = Math.abs(mapToVoltage(dataPoints.get(i).getMagnitude()));
                 String formattedVoltage = String.format(Locale.US, "DATA %.2f", voltage); // Locale US pour un point
 
-                sendCommand(formattedVoltage);
+                SerialPortUtils.writeToPort(formattedVoltage);
 
                 if (progressListener != null) {
                     progressListener.accept((double) (i + 1) / totalPoints);
@@ -118,7 +101,7 @@ public class ArduinoCommandController {
         executor.shutdown();
 
         try {
-            future.get(); // Bloque jusqu'à la fin de la tâche
+            future.get();
         } catch (Exception e) {
             System.err.println("Error during transmission: " + e.getMessage());
             e.printStackTrace();
@@ -149,7 +132,6 @@ public class ArduinoCommandController {
      *                           (1 mm/s correspond à 10 Hz pour le moteur)
      * @return true si le moteur a bien démarré, false sinon.
      */
-
     public boolean startMotor(double paperSpeedMmPerSec) {
         if (paperSpeedMmPerSec < 0.01 || paperSpeedMmPerSec > 30) {
             System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Must be >= 0.01 and <= 30.");
@@ -179,9 +161,7 @@ public class ArduinoCommandController {
     public void paperPush(double paperSpeed, int durationMs) {
 
         System.out.println("Pushing paper at " + paperSpeed + " mm/s for " + (durationMs / 1000.0) + " sec");
-
         startMotor(paperSpeed);
-
         new Thread(() -> {
             try {
                 Thread.sleep(durationMs);
@@ -244,7 +224,7 @@ public class ArduinoCommandController {
      */
     public void stopTransmission() {
         isTransmitting = false;
-        sendCommand("STOP");
+        SerialPortUtils.writeToPort("STOP");
         System.out.println("Data transmission stopped.");
     }
 
