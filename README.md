@@ -1,6 +1,6 @@
 # dBPlotter Application 🎶📈
 
-![Java](https://img.shields.io/badge/Java-17-blue.svg) ![JavaFX](https://img.shields.io/badge/JavaFX-17-orange.svg) ![License](https://img.shields.io/badge/License-MIT-green.svg) ![Version](https://img.shields.io/badge/Version-0.0.1-blue.svg) 
+![Java](https://img.shields.io/badge/Java-23-blue.svg) ![JavaFX](https://img.shields.io/badge/JavaFX-23-orange.svg) ![License](https://img.shields.io/badge/License-MIT-green.svg) ![Version](https://img.shields.io/badge/Version-0.0.1-blue.svg) 
 
 ![logo](https://github.com/user-attachments/assets/6d753fbb-23f7-41fe-a94b-e5e6d90582e1) A JavaFX-based desktop application designed to interface with the Bruel & Kjaer 2306 Level Recorder. This application processes acoustic data from CSV files (ARTA and REW formats) and sends control commands to the device over a serial connection.
 This useless and stupid idea allows generating report prints like in the old days. What you see in ARTA or REW will simply be printed on paper. **That's all**.
