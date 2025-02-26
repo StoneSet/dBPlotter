@@ -31,7 +31,9 @@ Compatible with macOS, Windows, Linux, see the release section.
 
 To interface with the Bruel & Kjaer 2306, I created a DAC interface using an Arduino.
 
-PHOTO du boitier
+Be aware that the B&K "Ext. port" use a 272° DIN 8 pinout (see in the service manual).
+
+![IMG_4647](https://github.com/user-attachments/assets/dbabdb9a-cf7b-4c7c-9455-b1b4bfb38630)
 
 #### Operation Principle
 
