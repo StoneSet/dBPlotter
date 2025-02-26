@@ -28,12 +28,12 @@ public class MainApp extends Application {
 
         scene.getStylesheets().add(getClass().getResource("/com/dlraudio/ui/style.css").toExternalForm());
 
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png")));
 
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             try {
                 Taskbar taskbar = Taskbar.getTaskbar();
-                ImageIcon icon = new ImageIcon(getClass().getResource("/com/dlraudio/ui/images/logo.png"));
+                ImageIcon icon = new ImageIcon(getClass().getResource("/com/dlraudio/ui/icons/icon.png"));
                 taskbar.setIconImage(icon.getImage());
 
             } catch (Exception e) {

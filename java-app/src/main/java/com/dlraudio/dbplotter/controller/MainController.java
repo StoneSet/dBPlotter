@@ -604,7 +604,7 @@ public class MainController {
             Parent root = loader.load();
 
             Stage aboutStage = new Stage();
-            aboutStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/logo.png")));
+            aboutStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png")));
             aboutStage.setResizable(false);
             aboutStage.setTitle("About this fucking good app");
             aboutStage.setScene(new Scene(root));
