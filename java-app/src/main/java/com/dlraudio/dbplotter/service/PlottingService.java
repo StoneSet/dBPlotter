@@ -10,8 +10,8 @@ import java.util.List;
 public class PlottingService {
 
     private final LineChart<Number, Number> lineChart;
-    private List<FrequencyData> originalData;  // Stocker les données originales
-    private List<FrequencyData> currentData;   // Stocker les données affichées
+    private List<FrequencyData> originalData;  // données originales
+    private List<FrequencyData> currentData;   // données affichées
 
     public PlottingService(LineChart<Number, Number> lineChart) {
         this.lineChart = lineChart;

@@ -1,6 +1,6 @@
 package com.dlraudio.dbplotter;
 
-import com.dlraudio.dbplotter.controller.ArduinoCommandController;
+import com.dlraudio.dbplotter.service.InterfaceCommandService;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,7 +14,7 @@ import java.awt.*;
 
 public class MainApp extends Application {
 
-    private static final ArduinoCommandController arduinoController = new ArduinoCommandController();
+    private static final InterfaceCommandService arduinoController = new InterfaceCommandService();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -24,7 +24,7 @@ public class MainApp extends Application {
         Parent root = loader.load();
 
         primaryStage.setTitle("dB Plotter Application - DLR Audio");
-        Scene scene = new Scene(root, 800, 500);
+        Scene scene = new Scene(root, 900, 500);
 
         scene.getStylesheets().add(getClass().getResource("/com/dlraudio/ui/style.css").toExternalForm());
 
@@ -40,7 +40,6 @@ public class MainApp extends Application {
                 System.err.println("Could not set Dock icon: " + e.getMessage());
             }
         }
-
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
 
@@ -48,7 +47,6 @@ public class MainApp extends Application {
             event.consume();
             closeApplication();
         });
-
         primaryStage.show();
     }
 
@@ -64,7 +62,6 @@ public class MainApp extends Application {
             System.out.println("Disconnecting serial port...");
             SerialPortUtils.disconnect();
         }
-
         System.exit(0);
     }
 

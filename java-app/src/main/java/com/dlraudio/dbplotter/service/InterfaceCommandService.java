@@ -1,7 +1,6 @@
-package com.dlraudio.dbplotter.controller;
+package com.dlraudio.dbplotter.service;
 
 import com.dlraudio.dbplotter.model.FrequencyData;
-import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.util.SerialPortUtils;
 import java.util.List;
 import java.util.Locale;
@@ -10,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-public class ArduinoCommandController {
+public class InterfaceCommandService {
 
     private Consumer<Double> remainingTimeListener;
     private Consumer<Double> progressListener;
@@ -76,7 +75,7 @@ public class ArduinoCommandController {
 
                 updateRemainingTime(totalPoints - i, timePerPointMs);
                 double voltage = Math.abs(mapToVoltage(dataPoints.get(i).getMagnitude()));
-                String formattedVoltage = String.format(Locale.US, "DATA %.2f", voltage); // Locale US pour un point
+                String formattedVoltage = String.format(Locale.US, "DATA %.2f", voltage);
 
                 SerialPortUtils.writeToPort(formattedVoltage);
 
@@ -134,25 +133,16 @@ public class ArduinoCommandController {
      */
     public boolean startMotor(double paperSpeedMmPerSec) {
         if (paperSpeedMmPerSec < 0.01 || paperSpeedMmPerSec > 30) {
-            System.err.println("Invalid paper speed: " + paperSpeedMmPerSec + " mm/s. Must be >= 0.01 and <= 30.");
+            System.err.println("[ERROR] Vitesse invalide !");
             return false;
         }
 
-        // Conversion mm/s → Hz
+        //TODO a revoir
         double frequency = Math.min(paperSpeedMmPerSec * 10, 350);
         String formattedFrequency = String.format(Locale.US, "%.2f", frequency);
 
-        SerialPortUtils.writeToPort("START_MOTOR " + formattedFrequency);
-        System.out.println("[CMD] Start motor command sent at " + formattedFrequency + " Hz.");
-
-        // ✅ Attente de l'ACK "MOTOR_STARTED" pendant 5 secondes
-        boolean ackReceived = waitForACK("MOTOR_STARTED", 5000);
-
-        if (!ackReceived) {
-            System.err.println("[ERROR] Motor did not start!");
-        }
-
-        return ackReceived;
+        System.out.println("[CMD] Envoi de START_MOTOR à " + formattedFrequency + " Hz");
+        return SerialPortUtils.sendCommandAndWaitForAck("START_MOTOR " + formattedFrequency, "MOTOR_STARTED", 5000).join();
     }
 
     /**
@@ -178,45 +168,17 @@ public class ArduinoCommandController {
      * @return true si le moteur s'est arrêté, false sinon.
      */
     public boolean stopMotor() {
-        SerialPortUtils.writeToPort("STOP_MOTOR");
-        System.out.println("[CMD] Stop motor command sent.");
-
-        boolean ackReceived = waitForACK("MOTOR_STOPPED", 5000);
-
-        if (!ackReceived) {
-            System.err.println("[ERROR] Motor did not stop!");
-        }
-
-        return ackReceived;
+        System.out.println("[CMD] Envoi de STOP_MOTOR");
+        return SerialPortUtils.sendCommandAndWaitForAck("STOP_MOTOR", "MOTOR_STOPPED", 5000).join();
     }
 
-    /**
-     * Attend un ACK spécifique (ex: "MOTOR_STARTED") avec un timeout.
-     * @return true si l'ACK est reçu, false sinon.
-     */
-    private boolean waitForACK(String expectedResponse, int timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        System.out.println("[ACK] Waiting for " + expectedResponse + "...");
-
-        while (System.currentTimeMillis() - startTime < timeoutMs) {
-            String response = SerialPortUtils.readBlocking(timeoutMs);
-
-            if (response != null && response.contains(expectedResponse)) {
-                System.out.println("[ACK] ✅ " + expectedResponse + " received!");
-                return true;
-            }
-        }
-
-        System.err.println("[ACK] ❌ Timeout waiting for " + expectedResponse);
-        return false;
-    }
 
     /**
      * Arrête immédiatement le moteur et la transmission des données.
      */
     public void emergencyStop() {
-        stopMotor();
         stopTransmission();
+        stopMotor();
     }
 
     /**

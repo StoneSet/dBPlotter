@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.dlraudio.dbplotter.controller.LogViewerController">
+    <children>
+        <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.bottomAnchor="10"
+              AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10">
+            <Label text="Serial Log Viewer" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            <TextArea fx:id="logTextArea" editable="false" wrapText="true" prefHeight="400"/>
+            <HBox spacing="10">
+                <Button text="Clear" onAction="#clearLog"/>
+                <Button text="Close" onAction="#closeWindow"/>
+            </HBox>
+        </VBox>
+    </children>
+</AnchorPane>

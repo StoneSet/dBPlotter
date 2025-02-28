@@ -11,4 +11,6 @@ module com.dlraudio.dbplotter {
 
     exports com.dlraudio.dbplotter;
     exports com.dlraudio.dbplotter.controller;
+    exports com.dlraudio.dbplotter.service;
+    opens com.dlraudio.dbplotter.service to javafx.fxml;
 }

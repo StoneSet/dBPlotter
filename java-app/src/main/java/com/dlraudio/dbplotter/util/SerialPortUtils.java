@@ -3,26 +3,40 @@ package com.dlraudio.dbplotter.util;
 import com.dlraudio.dbplotter.controller.MainController;
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
-import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class SerialPortUtils {
 
     private static final int BAUD_RATE = 9600;
-    private static String currentPort = null;
+    private static final int DataBits = 8;
+    private static final int StopBits = SerialPort.ONE_STOP_BIT;
+    private static final int Parity   = SerialPort.NO_PARITY;
+
     private static SerialPort serialPort;
     private static Thread listenerThread;
-    private static Consumer<String> messageListener;
-    private static boolean isListening = false; //check if listener is running
-    private static final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+    private static final List<Consumer<String>> listeners = new CopyOnWriteArrayList<>();
+    private static final ConcurrentHashMap<String, CompletableFuture<Boolean>> ackFutures = new ConcurrentHashMap<>();
 
+    private static ImageView txIndicator;
+    private static ImageView rxIndicator;
+
+    public static void setIndicators(ImageView tx, ImageView rx) {
+        txIndicator = tx;
+        rxIndicator = rx;
+    }
 
     /**
-     * Lister les ports série disponibles (listAvailablePorts)
+     * Lister les ports série disponibles
      */
     public static String[] listAvailablePorts() {
         SerialPort[] ports = SerialPort.getCommPorts();
@@ -38,74 +52,82 @@ public class SerialPortUtils {
      */
     public static boolean connect(String portName) {
         if (serialPort != null && serialPort.isOpen()) {
-            System.out.println("Port already open: " + portName);
+            LogUtils.log("Port already open: " + portName);
             return true;
         }
 
         serialPort = SerialPort.getCommPort(portName);
-        serialPort.setComPortParameters(BAUD_RATE, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
+        serialPort.setComPortParameters(BAUD_RATE, DataBits, StopBits, Parity);
         serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 1000, 1000);
 
+        startListening();
+
         if (!serialPort.openPort()) {
-            System.err.println("Failed to connect to " + portName);
+            LogUtils.logError("Issue while connecting to " + portName);
             return false;
         }
 
-        currentPort = portName;
-        System.out.println("Connected to " + portName + ". Waiting for Arduino reboot...");
+        LogUtils.log("Connected to " + portName + ". Waiting READY...");
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Now waiting for READY signal...");
-
-        if (!isListening) {
-            startListening();
-        }
-
-        // Attendre READY via le listener
-        final boolean[] isReady = {false};
-        setMessageListener(message -> {
+        CompletableFuture<Boolean> readyFuture = new CompletableFuture<>();
+        addMessageListener(message -> {
             if ("READY".equalsIgnoreCase(message.trim())) {
-                System.out.println("Arduino is READY!");
-                isReady[0] = true;
+                LogUtils.log("OK");
+                readyFuture.complete(true);
             }
         });
 
-        // Timeout après 10 sec si "READY" non reçu
-        long startTime = System.currentTimeMillis();
-        while (!isReady[0] && (System.currentTimeMillis() - startTime) < 10000) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        if (!isReady[0]) {
-            System.err.println("Timeout: Arduino did not send READY.");
-            disconnect();
+        try {
+            return readyFuture.get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            LogUtils.logError("Timeout: READY not received.");            disconnect();
             return false;
         }
-        return true;
     }
 
     /**
-     * Déconnecter du port série (disconnect)
+     * Déconnecter du port série
      */
     public static void disconnect() {
         if (serialPort != null && serialPort.isOpen()) {
             serialPort.closePort();
-            currentPort = null;
-            System.out.println("Disconnected from serial port.");
-        }
-        isListening = false;
+            LogUtils.logError("Port isn't open.");        }
+        ackFutures.clear();
     }
 
     /**
-     * Envoyer des données au port série (writeToPort)
+     * Vérifie si le port est connecté
+     */
+    public static boolean isConnected() {
+        return serialPort != null && serialPort.isOpen();
+    }
+
+    /**
+     * Envoie une commande et attend un ACK
+     */
+    public static CompletableFuture<Boolean> sendCommandAndWaitForAck(String command, String expectedAck, long timeoutMs) {
+        if (serialPort == null || !serialPort.isOpen()) {
+            LogUtils.logError("Port isn't open.");
+            return CompletableFuture.completedFuture(false);
+        }
+        writeToPort(command);
+
+        CompletableFuture<Boolean> ackFuture = new CompletableFuture<>();
+        ackFutures.put(expectedAck, ackFuture);
+
+        CompletableFuture.delayedExecutor(timeoutMs, TimeUnit.MILLISECONDS)
+                .execute(() -> {
+                    if (!ackFuture.isDone()) {
+                        LogUtils.logError("Timeout: ACK " + expectedAck + " not received.");
+                        ackFuture.complete(false);
+                    }
+                });
+
+        return ackFuture;
+    }
+
+    /**
+     * Envoie une commande sans attendre d'ACK
      */
     public static void writeToPort(String data) {
         if (serialPort != null && serialPort.isOpen()) {
@@ -113,79 +135,79 @@ public class SerialPortUtils {
                 OutputStream outputStream = serialPort.getOutputStream();
                 outputStream.write((data + "\n").getBytes());
                 outputStream.flush();
-                System.out.println("[TX] " + data);
-
-                Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().txActivity));
-
+                LogUtils.logTx(data);
+                blinkIndicator(txIndicator);
             } catch (Exception e) {
-                System.err.println("Error sending data: " + e.getMessage());
+                LogUtils.logError("Error while sending: " + e.getMessage());
             }
         } else {
-            System.err.println("Port not open.");
+            LogUtils.logError("Port is not open.");
         }
     }
 
     /**
-     * Vérifier si le port est connecté (isConnected)
+     * Ajoute un listener pour les messages reçus.
      */
-    public static boolean isConnected() {
-        //System.out.println("Port is open: " + (serialPort != null && serialPort.isOpen()));
-        return serialPort != null && serialPort.isOpen();
+    public static void addMessageListener(Consumer<String> listener) {
+        listeners.add(listener);
     }
 
     /**
-     * Ajoute un listener qui sera appelé dès qu'un message est reçu.
+     * Supprime un listener spécifique.
      */
-    public static void setMessageListener(Consumer<String> listener) {
-        messageListener = listener;
+    public static void removeMessageListener(Consumer<String> listener) {
+        listeners.remove(listener);
     }
 
     /**
-     * Lit une ligne du port série de manière bloquante (avec timeout).
-     */
-    public static String readBlocking(long timeoutMs) {
-        try {
-            String message = messageQueue.poll(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
-            if (message != null) {
-                System.out.println("[RX Blocking] " + message); // ✅ Log du message lu
-            }
-            return message;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return null;
-        }
-    }
-
-    /**
-     * Démarre un thread unique pour écouter les messages série et les stocker.
+     * Démarre un thread unique pour écouter les messages série
      */
     private static void startListening() {
         if (listenerThread != null && listenerThread.isAlive()) return;
 
         listenerThread = new Thread(() -> {
             try {
-                InputStream inputStream = serialPort.getInputStream();
-                byte[] buffer = new byte[1024];
+                BufferedReader reader = new BufferedReader(new InputStreamReader(serialPort.getInputStream()));
 
                 while (serialPort != null && serialPort.isOpen()) {
-                    int numBytes = inputStream.read(buffer);
-                    if (numBytes > 0) {
-                        String received = new String(buffer, 0, numBytes).trim();
-                        System.out.println("[RX] " + received);
+                    if (!reader.ready()) continue;
 
-                        messageQueue.offer(received);
-                        if (messageListener != null) {
-                            messageListener.accept(received);
+                    String received = reader.readLine();
+                    if (received != null && !received.trim().isEmpty()) {
+                        LogUtils.logRx(received);
+                        blinkIndicator(rxIndicator);
+
+                        for (Consumer<String> listener : listeners) {
+                            listener.accept(received);
                         }
-                        Platform.runLater(() -> MainController.getInstance().blinkIndicator(MainController.getInstance().rxActivity));
+
+                        CompletableFuture<Boolean> ackFuture = ackFutures.remove(received.trim());
+                        if (ackFuture != null) {
+                            ackFuture.complete(true);
+                        }
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error in serial listening: " + e.getMessage());
-            }
+                LogUtils.logError("Error: " + e.getMessage());            }
         });
 
         listenerThread.setDaemon(true);
         listenerThread.start();
+    }
+
+    /**
+     * Fait clignoter un indicateur LED (RX ou TX)
+     */
+    private static void blinkIndicator(ImageView indicator) {
+        if (indicator == null) return;
+
+        Platform.runLater(() -> indicator.setImage(new Image(Objects.requireNonNull(MainController.class.getResourceAsStream("/com/dlraudio/ui/images/green_light.png")))));
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {}
+            Platform.runLater(() -> indicator.setImage(new Image(Objects.requireNonNull(MainController.class.getResourceAsStream("/com/dlraudio/ui/images/red_light.png")))));
+        }).start();
     }
 }

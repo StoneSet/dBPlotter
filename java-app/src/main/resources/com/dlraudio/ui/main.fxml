@@ -69,6 +69,15 @@
                 </ImageView>
               </graphic>
             </MenuItem>
+            <MenuItem onAction="#openLogViewer" text="Log viewer">
+              <graphic>
+                <ImageView>
+                  <image>
+                    <Image url="@images/log.png"/>
+                  </image>
+                </ImageView>
+              </graphic>
+            </MenuItem>
           </items>
         </Menu>
       </menus>
@@ -90,7 +99,7 @@
             </columnConstraints>
             <children>
               <Button onAction="#onImportCsvRew" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV REW" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-              <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="184.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
+              <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
               <HBox spacing="5" GridPane.columnSpan="2" GridPane.rowIndex="2">
                 <Label text="Current file:" />
                 <Label fx:id="currentFileLabel" text="None" />
@@ -100,22 +109,31 @@
           </GridPane>
 
           <!-- Groupe Fonctions -->
+          <!-- Groupe Fonctions -->
           <Label style="-fx-font-weight: bold;" text="Functions" />
           <GridPane>
             <columnConstraints>
               <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
               <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
             </columnConstraints>
-            <Button fx:id="sendTo2306Button" onAction="#onSendTo2306" prefHeight="25.0" prefWidth="202.0"
+
+
+            <Button fx:id="paperPushButton" onAction="#onPaperPush" prefHeight="25.0" prefWidth="194.0"
+                    styleClass="function-button" text="Paper Push" GridPane.rowIndex="4"/>
+            <Button fx:id="autoCalibrateButton" onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="194.0"
+                    styleClass="function-button" text="Test Writing" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+
+            <!-- Espace vide pour créer une marge entre STOP et Paper Push -->
+            <Label text="" GridPane.rowIndex="3"/>
+
+            <Button fx:id="sendTo2306Button" onAction="#onSendTo2306" prefHeight="25.0" prefWidth="194.0"
                     styleClass="send-button" text="Send to 2306" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-            <Button fx:id="stopButton" onAction="#onStop" prefHeight="25.0" prefWidth="184.0" styleClass="stop-button"
+            <Button fx:id="stopButton" onAction="#onStop" prefHeight="25.0" prefWidth="194.0" styleClass="stop-button"
                     text="STOP" GridPane.rowIndex="2"/>
-            <Button fx:id="paperPushButton" onAction="#onPaperPush" prefHeight="25.0" prefWidth="184.0"
-                    styleClass="function-button" text="Paper Push"/>
-            <Button fx:id="autoCalibrateButton" onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="209.0"
-                    styleClass="function-button" text="Test Writing" GridPane.columnIndex="1"/>
+
           </GridPane>
         </VBox>
+
 
         <!-- Paramètres calculés -->
         <VBox prefHeight="209.0" prefWidth="379.0" spacing="10">

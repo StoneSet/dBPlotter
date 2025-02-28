@@ -1,16 +1,17 @@
 #include <Wire.h>
 #include <Adafruit_AD569x.h>
+#include <Tone.h>
 
 // Adresse I2C du DAC AD5693R
 #define DAC_ADDRESS 0x4C  
 
-// Broches de contrôle moteur et PWM
-#define MOTOR_PIN 2     // Contrôle du moteur via MOSFET ou relais
-#define PWM_PIN 3       // Sortie pour le signal TTL de fréquence variable
+// Broches pour le contrôle moteur et PWM
+#define MOTOR_PIN 2    
+#define PWM_PIN 3       
 
 bool motorRunning = false;
-bool motorReady = false;  // Sécurité pour DATA et TTL
 bool ready = false;
+Tone pwmSignal;
 
 Adafruit_AD569x dac;
 
@@ -19,27 +20,26 @@ void setup() {
     Wire.begin();
 
     pinMode(MOTOR_PIN, OUTPUT);
-    pinMode(PWM_PIN, OUTPUT);
-    digitalWrite(MOTOR_PIN, LOW);  // Moteur éteint au démarrage
+    pwmSignal.begin(PWM_PIN); 
+    digitalWrite(MOTOR_PIN, LOW);  
 
-    // Initialisation du DAC
     if (!dac.begin(DAC_ADDRESS, &Wire)) {
-        Serial.println("Erreur : Impossible d'initialiser le DAC AD5693R");
+        Serial.println("ERROR: DAC_INIT_FAILED");
         while (1);
     }
     
     Serial.println("READY");
-    dac.reset(); // Réinitialisation du DAC pour éviter toute incohérence
-    dac.setMode(NORMAL_MODE, true, false); // Mode normal, référence interne
+    dac.reset();
+    dac.setMode(NORMAL_MODE, true, false);
     Wire.setClock(800000);
     ready = true;
 }
 
 void loop() {
-    while (Serial.available()) { // Lire tout ce qui est dans le buffer
+    while (Serial.available()) { 
         String command = Serial.readStringUntil('\n');
         command.trim();
-        if (command.length() == 0) continue; // Ignorer les lignes vides
+        if (command.length() == 0) continue;
 
         if (command.startsWith("STOP_MOTOR")) {
             stopMotor();
@@ -54,9 +54,8 @@ void loop() {
     }
 }
 
-
 /**
- * Démarre le moteur (vérifie si ce n'est pas déjà fait)
+ * Démarre le moteur avec une fréquence définie.
  */
 void startMotor(int frequency) {
     if (motorRunning) {
@@ -67,34 +66,30 @@ void startMotor(int frequency) {
     frequency = constrain(frequency, 10, 5000);
 
     digitalWrite(MOTOR_PIN, HIGH);
-    delay(500);  // Petit délai pour stabiliser
+    delay(500);
     motorRunning = true;
-    motorReady = true;
-
     setPwmFrequency(frequency);
-
-    Serial.print("MOTOR_STARTED at ");
-    Serial.print(frequency);
-    Serial.println(" Hz");
+    delay(100);
+    Serial.println("MOTOR_STARTED");
 }
 
 /**
- * Arrête le moteur et sécurise les commandes
+ * Arrête le moteur et le signal PWM.
  */
 void stopMotor() {
     digitalWrite(MOTOR_PIN, LOW);
-    analogWrite(PWM_PIN, 0);  // Arrêter le signal PWM
+    stopPwm();
     motorRunning = false;
-    motorReady = false;
+    delay(100);
     Serial.println("MOTOR_STOPPED");
 }
 
 /**
- * Traite les données de tension à envoyer au DAC
+ * Traite et envoie la tension au DAC.
  */
 void processData(String command) {
-    if (!motorReady) {
-        Serial.println("ERROR: MOTOR_NOT_READY");
+    if (!motorRunning) {
+        Serial.println("ERROR: MOTOR_NOT_RUNNING");
         return;
     }
 
@@ -102,29 +97,33 @@ void processData(String command) {
     voltage = constrain(voltage, 0.0, 5.0);  
 
     uint16_t dacValue = (uint16_t)((voltage / 5.0) * 65535);
-    
     sendToDAC(dacValue);
 
     Serial.println("ACK: DATA_RECEIVED");
 }
 
 /**
- * Envoie la valeur au DAC en utilisant la bibliothèque Adafruit
+ * Envoie une valeur au DAC via I2C.
  */
 void sendToDAC(uint16_t value) {
     if (!dac.writeUpdateDAC(value)) {
-        Serial.println("Erreur : Échec de l'envoi au DAC");
+        Serial.println("ERROR: DAC_WRITE_FAILED");
     }
 }
 
 /**
- * Définit une fréquence PWM continue sur le moteur
+ * Configure une fréquence PWM continue.
  */
 void setPwmFrequency(int frequency) {
-    int dutyCycle = 127;  // 50% de cycle de travail (valeur entre 0 et 255)
-    int pwmValue = map(frequency, 10, 5000, 10, 255); // Conversion de la fréquence en valeur PWM
+    frequency = constrain(frequency, 1, 5000);
+    pwmSignal.play(frequency);
 
-    analogWrite(PWM_PIN, pwmValue);  // Écrit un signal PWM proportionnel à la fréquence demandée
-    Serial.print("PWM set to: ");
-    Serial.println(pwmValue);
+    Serial.print("PWM_SET: ");
+    Serial.println(frequency);
 }
+
+void stopPwm() {
+    pwmSignal.stop();
+    Serial.println("PWM_STOPPED");
+}
+

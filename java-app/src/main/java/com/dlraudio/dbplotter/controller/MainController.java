@@ -3,6 +3,7 @@ package com.dlraudio.dbplotter.controller;
 import com.dlraudio.dbplotter.MainApp;
 import com.dlraudio.dbplotter.model.FrequencyData;
 import com.dlraudio.dbplotter.model.PlotParameters;
+import com.dlraudio.dbplotter.service.InterfaceCommandService;
 import com.dlraudio.dbplotter.service.PlottingService;
 import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.test.AutoCalibrateTest;
@@ -96,7 +97,7 @@ public class MainController {
     private PlottingService plottingService;
     private PlotParameters plotParameters;
     private double importedPaperSpeedMmPerSec = 0.0;
-    private final ArduinoCommandController arduinoController = new ArduinoCommandController();
+    private final InterfaceCommandService arduinoController = new InterfaceCommandService();
 
     private static MainController instance;
 
@@ -117,6 +118,7 @@ public class MainController {
 
         plottingService = new PlottingService(lineChart);
         plottingService.initializePlot("Frequency (Hz)", "Amplitude (dB)");
+        SerialPortUtils.setIndicators(txActivity, rxActivity);
 
         arduinoController.setProgressListener(progress ->
                 Platform.runLater(() -> progressBar.setProgress(progress))
@@ -124,26 +126,6 @@ public class MainController {
 
         arduinoController.setRemainingTimeListener(this::updateRemainingTimeLabel);
     }
-
-    /*
-     * Mise à jour de l'indicateur d'activité de transmission. (que ça soit TX ou RX)
-     */
-    public void blinkIndicator(ImageView indicator) {
-        Platform.runLater(() -> {
-            indicator.setImage(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/green_light.png")));
-        });
-
-        // repasser en rouge après 10 ms
-        new Thread(() -> {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {}
-            Platform.runLater(() -> {
-                indicator.setImage(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/images/red_light.png")));
-            });
-        }).start();
-    }
-
 
     /*
      * Mise à jour de l'étiquette de temps restant.
@@ -438,7 +420,7 @@ public class MainController {
 
             Platform.runLater(() -> {
                 setButtonsDisabled(true);
-                statusLabel.setText("Data transmission in progress.");
+                statusLabel.setText("Transmission....");
             });
 
             Task<Void> sendTask = new Task<>() {
@@ -451,7 +433,7 @@ public class MainController {
                 @Override
                 protected void succeeded() {
                     Platform.runLater(() -> setButtonsDisabled(false));
-                    statusLabel.setText("Data transmission complete.");
+                    statusLabel.setText("Transmission complete.");
                 }
 
                 @Override
@@ -614,4 +596,20 @@ public class MainController {
             e.printStackTrace();
         }
     }
+    @FXML
+    public void openLogViewer() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/LogViewer.fxml"));
+            Parent root = loader.load();
+
+            Stage logStage = new Stage();
+            logStage.setTitle("Serial Log Viewer");
+            logStage.setScene(new Scene(root));
+            logStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
