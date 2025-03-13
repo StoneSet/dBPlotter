@@ -197,7 +197,7 @@
       <!-- Deuxième ligne : Graphique de simulation -->
       <VBox spacing="10">
         <padding><Insets left="10" right="10" /></padding>
-        <Label style="-fx-font-weight: bold;" text="Graph Preview" />
+        <Label style="-fx-font-weight: bold;" text="Graph Preview (Linear)" />
         <LineChart fx:id="lineChart" createSymbols="false" prefHeight="240.0" prefWidth="800.0" VBox.vgrow="ALWAYS">
           <xAxis>
             <NumberAxis label="Frequency (Hz)" tickUnit="1000" />
