@@ -153,13 +153,6 @@ public class SerialPortUtils {
     }
 
     /**
-     * Supprime un listener spécifique.
-     */
-    public static void removeMessageListener(Consumer<String> listener) {
-        listeners.remove(listener);
-    }
-
-    /**
      * Démarre un thread unique pour écouter les messages série
      */
     private static void startListening() {

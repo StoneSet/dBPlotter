@@ -4,8 +4,8 @@ import com.dlraudio.dbplotter.MainApp;
 import com.dlraudio.dbplotter.model.FrequencyData;
 import com.dlraudio.dbplotter.model.PlotParameters;
 import com.dlraudio.dbplotter.service.InterfaceCommandService;
+import com.dlraudio.dbplotter.service.LogScaleConverterService;
 import com.dlraudio.dbplotter.service.PlottingService;
-import com.dlraudio.dbplotter.service.PrintSpeedCalculatorService;
 import com.dlraudio.dbplotter.test.AutoCalibrateTest;
 import com.dlraudio.dbplotter.util.CsvImporter;
 import com.dlraudio.dbplotter.util.FileUtils;
@@ -26,7 +26,9 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,30 +93,39 @@ public class MainController {
     private Button paperPushButton;
     @FXML
     private Button autoCalibrateButton;
+    @FXML
+    private Label paperLengthField;
+    @FXML
+    private TextField paperTimeField;
+    @FXML
+    private TextField resolutionField;
+    @FXML
+    private Label totalDataPointsField;
+    @FXML
+    private Label totalFilteredDataPointsField;
+    @FXML
+    private Label paperSpeedErrorLabel;
+    @FXML
+    private TextField pushTimeField;
 
     private boolean isCsvImported = false;
     private String selectedPort;
     private PlottingService plottingService;
     private PlotParameters plotParameters;
-    private double importedPaperSpeedMmPerSec = 0.0;
     private final InterfaceCommandService arduinoController = new InterfaceCommandService();
 
-    private static MainController instance;
-
-    public MainController() {
-        instance = this;
-    }
-
-    public static MainController getInstance() {
-        return instance;
-    }
+    private double importedPaperSpeedMmPerSec;
 
     @FXML
     public void initialize() {
+        lineChart.setLegendVisible(false);
+        initializeFields();
         disconnectMenuItem.setDisable(true);
         disableSmoothingMenus(true);
         updateButtonStates();
         connectMenuItem.setDisable(true);
+        resolutionField.setDisable(true);
+        paperTimeField.setDisable(true);
 
         plottingService = new PlottingService(lineChart);
         plottingService.initializePlot("Frequency (Hz)", "Amplitude (dB)");
@@ -124,7 +135,54 @@ public class MainController {
                 Platform.runLater(() -> progressBar.setProgress(progress))
         );
 
+        paperTimeField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateDataAutomatically();
+        });
+
+        resolutionField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateDataAutomatically();
+        });
+
+        pushTimeField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateDataAutomatically();
+        });
+
         arduinoController.setRemainingTimeListener(this::updateRemainingTimeLabel);
+    }
+
+    /*
+     * Mise à jour de la vitesse du papier en fonction du temps de tracé.
+     */
+    private void updateDataAutomatically() {
+        try {
+            double newTime = Double.parseDouble(paperTimeField.getText().replace(',', '.'));
+            int newResolution = Integer.parseInt(resolutionField.getText());
+            int pushTime = Integer.parseInt(pushTimeField.getText().trim());
+
+            double newSpeed = LogScaleConverterService.PRINTABLE_WIDTH_MM / newTime;
+
+            if (newSpeed < 0.01 || newSpeed > 30) {
+                paperSpeedErrorLabel.setText("Must be > 0.01 < 30 mm/s.");
+                paperTimeField.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
+                return;
+            }
+
+            if (pushTime < 1000 || pushTime > 10000) {
+                pushTimeField.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
+            } else {
+                pushTimeField.setStyle("");
+            }
+
+            LogScaleConverterService.DEFAULT_PRINT_DURATION_SEC = newTime;
+            LogScaleConverterService.N_POINTS = newResolution;
+
+            paperSpeedField.setText(String.format("%.2f mm/s", newSpeed));
+            paperTimeField.setStyle("");
+            paperSpeedErrorLabel.setText("");
+        } catch (NumberFormatException e) {
+            paperTimeField.setStyle("-fx-border-color: red; -fx-border-width: 2px;");
+            paperSpeedErrorLabel.setText("No valid numeric values.");
+        }
     }
 
     /*
@@ -135,6 +193,26 @@ public class MainController {
                 remainingTimeLabel.setText(String.format("%.2f seconds", remainingTimeSec))
         );
     }
+
+    /*
+     * Init des champs d'étiquettes.
+     */
+    private void initializeFields() {
+        minFrequencyField.setText("0.00 Hz");
+        maxFrequencyField.setText("0.00 Hz");
+        minDbField.setText("0.00 dB");
+        maxDbField.setText("0.00 dB");
+        pushTimeField.setText(String.valueOf(InterfaceCommandService.getDefaultPushTimeMs())); // Valeur par défaut : 2000 ms
+
+        totalDataPointsField.setText("0");
+        totalFilteredDataPointsField.setText("0");
+
+        paperSpeedField.setText("0.00 mm/s");
+        paperLengthField.setText("0.00 mm");
+        paperTimeField.setText(String.format(Locale.US, "%.2f", LogScaleConverterService.DEFAULT_PRINT_DURATION_SEC));
+        resolutionField.setText(String.format(Locale.US, "%d", LogScaleConverterService.N_POINTS));
+    }
+
 
     /*
      * Mise à jour de l'état des boutons en fonction de la connexion à l'Arduino et de l'importation du fichier CSV.
@@ -152,7 +230,6 @@ public class MainController {
         connectMenuItem.setDisable(enableArduinoActions);
         disconnectMenuItem.setDisable(!enableArduinoActions);
     }
-
 
     /*
      * Désactiver les menus de lissage en fonction de l'état de l'importation du fichier CSV.
@@ -186,6 +263,14 @@ public class MainController {
         double minDb = FrequencyData.getMinMagnitude(dataPoints);
         double maxDb = FrequencyData.getMaxMagnitude(dataPoints);
 
+        importedPaperSpeedMmPerSec = LogScaleConverterService.FIXED_PAPER_SPEED;
+
+        resolutionField.setDisable(false);
+        paperTimeField.setDisable(false);
+
+        LogScaleConverterService.DEFAULT_PRINT_DURATION_SEC = Double.parseDouble(paperTimeField.getText());
+        LogScaleConverterService.N_POINTS = Integer.parseInt(resolutionField.getText());
+
         plotParameters = new PlotParameters(minFreq, maxFreq, minDb, maxDb);
         Platform.runLater(this::displayCalculatedParameters);
     }
@@ -199,6 +284,11 @@ public class MainController {
             maxFrequencyField.setText(String.format("%.2f Hz", plotParameters.getMaxFrequency()));
             minDbField.setText(String.format("%.2f dB", plotParameters.getMinDb()));
             maxDbField.setText(String.format("%.2f dB", plotParameters.getMaxDb()));
+
+            paperSpeedField.setText(String.format("%.2f mm/s", importedPaperSpeedMmPerSec));
+            paperLengthField.setText(String.format("%.2f mm", LogScaleConverterService.PRINTABLE_WIDTH_MM));
+            paperTimeField.setText(String.format("%.2f", LogScaleConverterService.DEFAULT_PRINT_DURATION_SEC));
+            resolutionField.setText(String.format("%d", LogScaleConverterService.N_POINTS));
         }
     }
 
@@ -211,7 +301,7 @@ public class MainController {
             sendTo2306Button.setDisable(!isCsvImported || running);
             paperPushButton.setDisable(running);
             autoCalibrateButton.setDisable(running);
-            stopButton.setDisable(!running); // ✅ STOP doit être activé quand les autres sont désactivés
+            stopButton.setDisable(!running);
         });
     }
 
@@ -321,10 +411,6 @@ public class MainController {
                 plottingService.plotData(dataPoints);
 
                 updateCalculatedParameters(dataPoints);
-                double estimatedDurationSec = PrintSpeedCalculatorService.getTotalDuration(dataPoints);
-                importedPaperSpeedMmPerSec = PrintSpeedCalculatorService.calculatePaperSpeed(dataPoints.size(), estimatedDurationSec);
-
-                paperSpeedField.setText(String.format("%.2f mm/s", importedPaperSpeedMmPerSec));
 
                 disableSmoothingMenus(false);
 
@@ -335,6 +421,8 @@ public class MainController {
                 statusLabel.setText("CSV data imported and plotted.");
 
                 plottingService.setCurrentData(dataPoints);
+                totalDataPointsField.setText(String.valueOf(csvImportService.getTotalDataPoints()));
+                totalFilteredDataPointsField.setText(String.valueOf(csvImportService.getTotalFilteredDataPoints()));
             } else {
                 statusLabel.setText("No data found in the CSV file.");
             }
@@ -404,47 +492,59 @@ public class MainController {
 
     @FXML
     public void onSendTo2306() {
-        if (SerialPortUtils.isConnected()) {
-            List<FrequencyData> dataPoints = plottingService.getCurrentData();
-            if (dataPoints == null || dataPoints.isEmpty()) {
-                System.err.println("No data available for transmission.");
-                return;
-            }
-
-            double paperSpeedToUse = importedPaperSpeedMmPerSec;
-
-            if (paperSpeedToUse <= 0) {
-                System.err.println("Invalid paper speed: " + paperSpeedToUse + " mm/s. Cannot proceed.");
-                return;
-            }
-
-            Platform.runLater(() -> {
-                setButtonsDisabled(true);
-                statusLabel.setText("Transmission....");
-            });
-
-            Task<Void> sendTask = new Task<>() {
-                @Override
-                protected Void call() {
-                    arduinoController.startDataTransmission(dataPoints, paperSpeedToUse);
-                    return null;
-                }
-
-                @Override
-                protected void succeeded() {
-                    Platform.runLater(() -> setButtonsDisabled(false));
-                    statusLabel.setText("Transmission complete.");
-                }
-
-                @Override
-                protected void failed() {
-                    Platform.runLater(() -> setButtonsDisabled(false));
-                    statusLabel.setText("Transmission failed.");
-                }
-            };
-
-            new Thread(sendTask).start();
+        if (!SerialPortUtils.isConnected()) {
+            System.err.println("Arduino not connected.");
+            statusLabel.setText("Arduino not connected.");
+            return;
         }
+
+        List<FrequencyData> rawData = plottingService.getCurrentData();
+        if (rawData == null || rawData.isEmpty()) {
+            System.err.println("No data available for transmission.");
+            statusLabel.setText("No data available.");
+            return;
+        }
+
+        List<Double> targetFrequencies = LogScaleConverterService.generateLogSpacedFrequencies();
+
+        List<FrequencyData> interpolatedData = LogScaleConverterService.interpolateData(rawData, targetFrequencies);
+
+        if (importedPaperSpeedMmPerSec <= 0) {
+            System.err.println("Invalid paper speed: " + importedPaperSpeedMmPerSec + " mm/s.");
+            statusLabel.setText("Invalid paper speed.");
+            return;
+        }
+
+        Platform.runLater(() -> {
+            setButtonsDisabled(true);
+            statusLabel.setText("Sending data...");
+        });
+
+        Task<Void> sendTask = new Task<>() {
+            @Override
+            protected Void call() {
+                arduinoController.startDataTransmission(interpolatedData, importedPaperSpeedMmPerSec);
+                return null;
+            }
+
+            @Override
+            protected void succeeded() {
+                Platform.runLater(() -> {
+                    setButtonsDisabled(false);
+                    statusLabel.setText("Transmission complete.");
+                });
+            }
+
+            @Override
+            protected void failed() {
+                Platform.runLater(() -> {
+                    setButtonsDisabled(false);
+                    statusLabel.setText("Transmission failed.");
+                });
+            }
+        };
+
+        new Thread(sendTask).start();
     }
 
     private Window getWindow() {
@@ -495,6 +595,9 @@ public class MainController {
     @FXML
     private void onPaperPush() {
         if (SerialPortUtils.isConnected()) {
+
+            int pushTime = Integer.parseInt(pushTimeField.getText().trim());
+
             Platform.runLater(() -> {
                 setButtonsDisabled(true);
                 statusLabel.setText("Paper advancing...");
@@ -503,7 +606,7 @@ public class MainController {
             Task<Void> paperPushTask = new Task<>() {
                 @Override
                 protected Void call() {
-                    arduinoController.paperPush(1, 2000);
+                    arduinoController.paperPush(1, pushTime);
                     return null;
                 }
 
@@ -530,63 +633,70 @@ public class MainController {
 
     @FXML
     private void onAutoCalibrate() {
-        if (SerialPortUtils.isConnected()) {
+        if (!SerialPortUtils.isConnected()) {
+            System.err.println("Cannot calibrate: Arduino is not connected.");
+            statusLabel.setText("Arduino not connected.");
+            return;
+        }
 
-            Platform.runLater(() -> {
-                setButtonsDisabled(true);
-                statusLabel.setText("Auto Calibrating...");
-            });
+        Platform.runLater(() -> {
+            setButtonsDisabled(true);
+            statusLabel.setText("Auto Calibrating...");
+        });
 
-            Task<Void> autoCalibrateTask = new Task<>() {
-                @Override
-                protected Void call() {
-                    int totalPoints = 100;
-                    double estimatedDurationSec = 10.0;
+        Task<Void> autoCalibrateTask = new Task<>() {
+            @Override
+            protected Void call() {
+                int totalPoints = LogScaleConverterService.N_POINTS; // Aligner avec la résolution du tracé
+                double amplitude = 2.5; // Amplitude de l'onde sinusoïdale (oscille entre 0 et 5V)
 
-                    List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, 2.5, 2.5);
-                    List<FrequencyData> dataPoints = testWave.stream()
-                            .map(voltage -> new FrequencyData(0, voltage))
-                            .toList();
+                // Générer l'onde sinusoïdale
+                List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, amplitude);
 
-                    Platform.runLater(() -> {
-                        progressBar.setProgress(0);
-                    });
-
-                    double calibrationSpeed = PrintSpeedCalculatorService.calculatePaperSpeed(totalPoints, estimatedDurationSec);
-                    arduinoController.startDataTransmission(dataPoints, calibrationSpeed);
-
-                    return null;
+                // Convertir en `FrequencyData` (fréquence arbitraire, ici 1000 Hz juste pour formatage)
+                List<FrequencyData> dataPoints = new ArrayList<>();
+                for (Double voltage : testWave) {
+                    dataPoints.add(new FrequencyData(1000, voltage)); // 1000 Hz est arbitraire, on ne trace pas vraiment de fréquence ici
                 }
 
-                @Override
-                protected void succeeded() {
-                    Platform.runLater(() -> setButtonsDisabled(false));
+                Platform.runLater(() -> progressBar.setProgress(0));
+
+                // Utiliser la vitesse fixe
+                double calibrationSpeed = LogScaleConverterService.FIXED_PAPER_SPEED;
+                arduinoController.startDataTransmission(dataPoints, calibrationSpeed);
+
+                return null;
+            }
+
+            @Override
+            protected void succeeded() {
+                Platform.runLater(() -> {
+                    setButtonsDisabled(false);
                     statusLabel.setText("Calibration Complete.");
                     progressBar.setProgress(1.0);
-                }
+                });
+            }
 
-                @Override
-                protected void failed() {
-                    Platform.runLater(() -> setButtonsDisabled(false));
+            @Override
+            protected void failed() {
+                Platform.runLater(() -> {
+                    setButtonsDisabled(false);
                     statusLabel.setText("Calibration failed.");
-                }
-            };
+                });
+            }
+        };
 
-            new Thread(autoCalibrateTask).start();
-        } else {
-            System.err.println("Cannot calibrate: Arduino is not connected.");
-        }
+        new Thread(autoCalibrateTask).start();
     }
-
 
     @FXML
     public void onAbout() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/about.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/About.fxml"));
             Parent root = loader.load();
 
             Stage aboutStage = new Stage();
-            aboutStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png")));
+            aboutStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png"))));
             aboutStage.setResizable(false);
             aboutStage.setTitle("About this fucking good app");
             aboutStage.setScene(new Scene(root));
@@ -603,6 +713,7 @@ public class MainController {
             Parent root = loader.load();
 
             Stage logStage = new Stage();
+            logStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png"))));
             logStage.setTitle("Serial Log Viewer");
             logStage.setScene(new Scene(root));
             logStage.show();

@@ -176,7 +176,7 @@
                 </executions>
                 <configuration>
                   <workingDirectory>${project.basedir}</workingDirectory>
-                  <executable>build-windows.bat</executable>
+                  <executable>build-win.bat</executable>
                   <environmentVariables>
                     <APP_VERSION>${client.version}</APP_VERSION>
                     <PROJECT_VERSION>${project.version}</PROJECT_VERSION>

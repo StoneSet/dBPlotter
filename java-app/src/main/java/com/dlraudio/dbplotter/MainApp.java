@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 public class MainApp extends Application {
 
@@ -19,21 +20,21 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/main.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dlraudio/ui/Main.fxml"));
 
         Parent root = loader.load();
 
         primaryStage.setTitle("dB Plotter Application - DLR Audio");
         Scene scene = new Scene(root, 900, 500);
 
-        scene.getStylesheets().add(getClass().getResource("/com/dlraudio/ui/style.css").toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/dlraudio/ui/style.css")).toExternalForm());
 
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png")));
+        primaryStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/com/dlraudio/ui/icons/icon.png"))));
 
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             try {
                 Taskbar taskbar = Taskbar.getTaskbar();
-                ImageIcon icon = new ImageIcon(getClass().getResource("/com/dlraudio/ui/icons/icon.png"));
+                ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/com/dlraudio/ui/icons/icon.png")));
                 taskbar.setIconImage(icon.getImage());
 
             } catch (Exception e) {

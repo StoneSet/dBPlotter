@@ -7,18 +7,20 @@ public class AutoCalibrateTest {
 
     /**
      * Génère une onde sinusoïdale pour l'auto-calibration du DAC.
-     * @param samples Nombre de points de l'onde
+     * @param samples Nombre de points de l'onde (résolution)
      * @param amplitude Amplitude max de la sinusoïde (en Volts)
-     * @param offset Décalage DC de l'onde (en Volts)
      * @return Liste des tensions à envoyer au DAC
      */
-    public static List<Double> generateCalibrationWave(int samples, double amplitude, double offset) {
+    public static List<Double> generateCalibrationWave(int samples, double amplitude) {
         List<Double> wave = new ArrayList<>();
 
         for (int i = 0; i < samples; i++) {
-            double angle = 2 * Math.PI * i / samples;
-            wave.add(offset + amplitude * Math.sin(angle)); // Ajoute l'offset DC
+            double angle = 2 * Math.PI * i / samples; // Angle en radians
+            double voltage = (amplitude * Math.sin(angle)) + amplitude; // Oscille entre 0V et 5V
+            wave.add(voltage);
         }
+
         return wave;
     }
+
 }

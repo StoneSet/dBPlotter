@@ -19,11 +19,10 @@ public class PlottingService {
         this.currentData = new ArrayList<>();
     }
 
-    // Initialise le graphique avec des paramètres de base
     public void initializePlot(String xAxisLabel, String yAxisLabel) {
         lineChart.getXAxis().setLabel(xAxisLabel);
         lineChart.getYAxis().setLabel(yAxisLabel);
-        lineChart.setAnimated(false);  // Évite les animations lentes
+        lineChart.setAnimated(false);
     }
 
     // Ajoute les données au graphique
@@ -41,23 +40,19 @@ public class PlottingService {
         currentData = new ArrayList<>(dataPoints);
     }
 
-    // Nettoie les données du graphique
     public void clearPlot() {
         lineChart.getData().clear();
     }
 
-    // Définit les données originales (lors de l'importation)
     public void setCurrentData(List<FrequencyData> dataPoints) {
         this.originalData = new ArrayList<>(dataPoints);
         this.currentData = new ArrayList<>(dataPoints);  // Initialement, les données actuelles sont les mêmes
     }
 
-    // Récupère les données originales
     public List<FrequencyData> getOriginalData() {
         return new ArrayList<>(originalData);  // Retourne une copie pour éviter les modifications
     }
 
-    // Récupère les données actuelles affichées
     public List<FrequencyData> getCurrentData() {
         return new ArrayList<>(currentData);
     }

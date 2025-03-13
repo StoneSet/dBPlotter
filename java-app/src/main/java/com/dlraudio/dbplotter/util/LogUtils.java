@@ -27,7 +27,7 @@ public class LogUtils {
         String formattedMessage = "[RX] " + message;
 
         if (message.contains("ACK")) {
-            formattedMessage = "[RX] *" + message + "*"; // Entoure de '*'
+            formattedMessage = "[RX] *" + message + "*";
         }
 
         System.out.println(ColorUtils.colorize(formattedMessage, ColorUtils.CYAN));

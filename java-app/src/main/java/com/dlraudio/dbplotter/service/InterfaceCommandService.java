@@ -14,6 +14,11 @@ public class InterfaceCommandService {
     private Consumer<Double> remainingTimeListener;
     private Consumer<Double> progressListener;
     private volatile boolean isTransmitting = false;
+    public static final int DEFAULT_PUSH_TIME_MS = 2000;
+
+    public static int getDefaultPushTimeMs() {
+        return DEFAULT_PUSH_TIME_MS;
+    }
 
     /**
      * Définit un écouteur pour la progression de la transmission des données.
@@ -54,12 +59,12 @@ public class InterfaceCommandService {
         }
 
         isTransmitting = true;
-        double timePerPointMs = PrintSpeedCalculatorService.calculateTimePerPoint(paperSpeedMmPerSec);
+        double timePerPointMs = LogScaleConverterService.calculateDefaultTimePerPoint();
         System.out.println("Time per point: " + timePerPointMs + " ms");
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        if (!startMotor(paperSpeedMmPerSec)) {
+        if (!startMotor(LogScaleConverterService.FIXED_PAPER_SPEED)) {
             System.err.println("Motor failed to start. Aborting transmission.");
             isTransmitting = false;
             return;
@@ -109,7 +114,6 @@ public class InterfaceCommandService {
         stopMotor();
         System.out.println("Transmission complete.");
     }
-
 
     /**
      * Convertit les valeurs de dB en tension pour le DAC.

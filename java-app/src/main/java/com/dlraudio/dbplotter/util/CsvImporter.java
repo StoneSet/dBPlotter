@@ -18,6 +18,9 @@ public class CsvImporter {
         return importCsv(csvFile, ",");
     }
 
+    private int totalDataPoints = 0;
+    private int totalFilteredDataPoints = 0;
+
     /**
      * Importe un fichier CSV REW avec une gestion correcte des colonnes et espaces.
      */
@@ -65,6 +68,8 @@ public class CsvImporter {
             e.printStackTrace();
         }
 
+        totalDataPoints = dataPoints.size();
+
         System.out.println("Total data points imported: " + dataPoints.size());
         return conditionData(dataPoints);
     }
@@ -103,6 +108,8 @@ public class CsvImporter {
             e.printStackTrace();
         }
 
+        totalDataPoints = dataPoints.size();
+
         System.out.println("Total data points imported: " + dataPoints.size());
         return conditionData(dataPoints);
     }
@@ -114,12 +121,21 @@ public class CsvImporter {
         List<FrequencyData> filteredData = new ArrayList<>();
 
         for (FrequencyData data : rawData) {
-            if (data.getFrequency() >= 10 && data.getFrequency() <= 22000) {
+            if (data.getFrequency() >= 20 && data.getFrequency() <= 20000) {
                 filteredData.add(data);
             }
         }
 
-        System.out.println("Filtered data points (10Hz - 22kHz): " + filteredData.size());
+        totalFilteredDataPoints = filteredData.size();
+        System.out.println("Filtered data points (20Hz - 20kHz): " + filteredData.size());
         return filteredData;
+    }
+
+    public int getTotalDataPoints() {
+        return totalDataPoints;
+    }
+
+    public int getTotalFilteredDataPoints() {
+        return totalFilteredDataPoints;
     }
 }

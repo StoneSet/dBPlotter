@@ -98,8 +98,8 @@
               <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
             </columnConstraints>
             <children>
-              <Button onAction="#onImportCsvRew" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV REW" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-              <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="194.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
+              <Button onAction="#onImportCsvRew" prefHeight="25.0" prefWidth="150.0" styleClass="import-button" text="Import CSV REW" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+              <Button onAction="#onImportCsvArta" prefHeight="25.0" prefWidth="150.0" styleClass="import-button" text="Import CSV ARTA" GridPane.rowIndex="1" />
               <HBox spacing="5" GridPane.columnSpan="2" GridPane.rowIndex="2">
                 <Label text="Current file:" />
                 <Label fx:id="currentFileLabel" text="None" />
@@ -118,46 +118,80 @@
             </columnConstraints>
 
 
-            <Button fx:id="paperPushButton" onAction="#onPaperPush" prefHeight="25.0" prefWidth="194.0"
+            <Button fx:id="paperPushButton" onAction="#onPaperPush" prefHeight="25.0" prefWidth="150.0"
                     styleClass="function-button" text="Paper Push" GridPane.rowIndex="4"/>
-            <Button fx:id="autoCalibrateButton" onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="194.0"
+            <Button fx:id="autoCalibrateButton" onAction="#onAutoCalibrate" prefHeight="25.0" prefWidth="150.0"
                     styleClass="function-button" text="Test Writing" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
 
             <!-- Espace vide pour créer une marge entre STOP et Paper Push -->
             <Label text="" GridPane.rowIndex="3"/>
 
-            <Button fx:id="sendTo2306Button" onAction="#onSendTo2306" prefHeight="25.0" prefWidth="194.0"
+            <Button fx:id="sendTo2306Button" onAction="#onSendTo2306" prefHeight="25.0" prefWidth="150.0"
                     styleClass="send-button" text="Send to 2306" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-            <Button fx:id="stopButton" onAction="#onStop" prefHeight="25.0" prefWidth="194.0" styleClass="stop-button"
+            <Button fx:id="stopButton" onAction="#onStop" prefHeight="25.0" prefWidth="150.0" styleClass="stop-button"
                     text="STOP" GridPane.rowIndex="2"/>
 
           </GridPane>
         </VBox>
 
 
-        <!-- Paramètres calculés -->
-        <VBox prefHeight="209.0" prefWidth="379.0" spacing="10">
+        <VBox prefHeight="180.0" prefWidth="450.0" spacing="10">
           <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
-          <Label style="-fx-font-weight: bold;" text="Calculated Parameters" />
-          <GridPane hgap="10" vgap="10">
+
+          <GridPane hgap="20" vgap="5">
             <columnConstraints>
-              <ColumnConstraints halignment="RIGHT" minWidth="100" />
-              <ColumnConstraints hgrow="ALWAYS" />
+              <ColumnConstraints minWidth="150" halignment="RIGHT" />
+              <ColumnConstraints minWidth="80" halignment="LEFT" />
+              <ColumnConstraints minWidth="150" halignment="RIGHT" />
+              <ColumnConstraints minWidth="80" halignment="LEFT" />
+              <ColumnConstraints minWidth="20" halignment="LEFT" />
             </columnConstraints>
 
-            <Label text="Min Frequency (Hz)" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <Label  fx:id="minFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-            <Label text="Max Frequency (Hz)" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <Label  fx:id="maxFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <!-- Titres -->
+            <Label style="-fx-font-weight: bold;" text="Calculated Parameters" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label style="-fx-font-weight: bold;" text="Printing Parameters" GridPane.columnIndex="2" GridPane.rowIndex="0" />
 
-            <Label text="Minimum dB" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <Label  fx:id="minDbField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Label text="Maximum dB" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-            <Label  fx:id="maxDbField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <!-- Colonne 1 : Fréquences et dB -->
+            <Label text="Min frequency :" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <Label fx:id="minFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-            <Label text="Paper Speed (mm/s)" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-            <Label fx:id="paperSpeedField" text="0.00 mm/s" GridPane.columnIndex="1" GridPane.rowIndex="4" />          </GridPane>
+            <Label text="Max frequency :" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+            <Label fx:id="maxFrequencyField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+            <Label text="Minimum dB :" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+            <Label fx:id="minDbField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+            <Label text="Maximum dB :" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+            <Label fx:id="maxDbField" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+            <Label text="Total points :" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+            <Label fx:id="totalDataPointsField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+            <Label text="Total filtered points :" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+            <Label fx:id="totalFilteredDataPointsField" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+            <!-- Colonne 2 : Paramètres d'impression -->
+            <Label text="Paper speed :" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Label fx:id="paperSpeedField" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+
+            <Label text="Paper length :" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+            <Label fx:id="paperLengthField" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+
+            <Label text="Resolution :" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+            <TextField fx:id="resolutionField" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+            <Label text="N" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+
+            <Label text="Printing time :" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+            <TextField fx:id="paperTimeField" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+            <Label text="s" GridPane.columnIndex="4" GridPane.rowIndex="4" />
+            <Label fx:id="paperSpeedErrorLabel" text="" style="-fx-text-fill: red; -fx-font-size: 12px;" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
+
+            <Label text="Paper push time :" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+            <TextField fx:id="pushTimeField" GridPane.columnIndex="3" GridPane.rowIndex="6" />
+            <Label text="ms" GridPane.columnIndex="4" GridPane.rowIndex="6" />
+          </GridPane>
         </VBox>
+
       </SplitPane>
 
       <!-- Deuxième ligne : Graphique de simulation -->

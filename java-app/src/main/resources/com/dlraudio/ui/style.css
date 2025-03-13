@@ -2,7 +2,7 @@
 .button {
     -fx-background-radius: 8;
     -fx-border-radius: 8;
-    -fx-padding: 8 12;
+    -fx-padding: 3;
     -fx-text-fill: black;
     -fx-font-size: 12px;
     -fx-border-color: #bbb;
