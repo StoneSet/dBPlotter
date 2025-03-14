@@ -11,6 +11,7 @@ public class AutoCalibrateTest {
      * @param amplitude Amplitude max de la sinusoïde (en Volts)
      * @return Liste des tensions à envoyer au DAC
      */
+    //TODO a revoir
     public static List<Double> generateCalibrationWave(int samples, double amplitude) {
         List<Double> wave = new ArrayList<>();
 

@@ -13,7 +13,6 @@ public class FrequencyData {
         this.magnitude = magnitude;
     }
 
-    // Getters
     public double getFrequency() {
         return frequency;
     }

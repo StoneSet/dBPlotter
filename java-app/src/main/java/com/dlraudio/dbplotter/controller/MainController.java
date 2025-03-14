@@ -342,6 +342,9 @@ public class MainController {
         return portItem;
     }
 
+    /*
+     * Sélection du port COM.
+     */
     private void onPortSelected(String port) {
         if (SerialPortUtils.isConnected()) {
             System.out.println("Cannot change port while connected.");
@@ -354,6 +357,9 @@ public class MainController {
         System.out.println("Selected port: " + port);
     }
 
+    /*
+     * Connexion à l'interface .
+     */
     @FXML
     public void onConnect() {
         if (SerialPortUtils.isConnected()) {
@@ -373,6 +379,9 @@ public class MainController {
         updateButtonStates();
     }
 
+    /*
+     * Déconnexion propre de l'interface.
+     */
     @FXML
     public void onDisconnect() {
         SerialPortUtils.disconnect();
@@ -394,6 +403,9 @@ public class MainController {
         importCsvData("arta");
     }
 
+    /*
+     * Importation des données CSV.
+     */
     @FXML
     private void importCsvData(String type) {
         File csvFile = FileUtils.selectCsvFile(getWindow());
@@ -543,7 +555,6 @@ public class MainController {
                 });
             }
         };
-
         new Thread(sendTask).start();
     }
 
@@ -647,13 +658,11 @@ public class MainController {
         Task<Void> autoCalibrateTask = new Task<>() {
             @Override
             protected Void call() {
-                int totalPoints = LogScaleConverterService.N_POINTS; // Aligner avec la résolution du tracé
-                double amplitude = 2.5; // Amplitude de l'onde sinusoïdale (oscille entre 0 et 5V)
+                int totalPoints = LogScaleConverterService.N_POINTS;
+                double amplitude = 2.5;
 
-                // Générer l'onde sinusoïdale
                 List<Double> testWave = AutoCalibrateTest.generateCalibrationWave(totalPoints, amplitude);
 
-                // Convertir en `FrequencyData` (fréquence arbitraire, ici 1000 Hz juste pour formatage)
                 List<FrequencyData> dataPoints = new ArrayList<>();
                 for (Double voltage : testWave) {
                     dataPoints.add(new FrequencyData(1000, voltage)); // 1000 Hz est arbitraire, on ne trace pas vraiment de fréquence ici
@@ -661,7 +670,6 @@ public class MainController {
 
                 Platform.runLater(() -> progressBar.setProgress(0));
 
-                // Utiliser la vitesse fixe
                 double calibrationSpeed = LogScaleConverterService.FIXED_PAPER_SPEED;
                 arduinoController.startDataTransmission(dataPoints, calibrationSpeed);
 

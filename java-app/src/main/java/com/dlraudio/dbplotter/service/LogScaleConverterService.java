@@ -8,10 +8,11 @@ import java.util.List;
 public class LogScaleConverterService {
 
     public static final double PRINTABLE_WIDTH_MM = 150.0; // Largeur imprimable
+    public static final double PRINTABLE_HEIGHT_MM = 50.0; // Hauteur imprimable
     public static final double FREQ_MIN_HZ = 20.0;
     public static final double FREQ_MAX_HZ = 20000.0;
-    public static int N_POINTS = 1000; // Résolution fixe
-    public static double DEFAULT_PRINT_DURATION_SEC = 20; // Temps total cible
+    public static int N_POINTS = 1000; // Résolution par défaut
+    public static double DEFAULT_PRINT_DURATION_SEC = 20; // Temps total cible par défaut
     // Calcul direct de la vitesse basée sur la durée cible
     public static final double FIXED_PAPER_SPEED = PRINTABLE_WIDTH_MM / DEFAULT_PRINT_DURATION_SEC;
 

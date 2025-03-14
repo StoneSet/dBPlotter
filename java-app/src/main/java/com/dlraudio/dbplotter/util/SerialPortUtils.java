@@ -122,7 +122,6 @@ public class SerialPortUtils {
                         ackFuture.complete(false);
                     }
                 });
-
         return ackFuture;
     }
 

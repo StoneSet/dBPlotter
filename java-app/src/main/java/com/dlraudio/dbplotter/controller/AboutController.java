@@ -7,6 +7,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
+import java.util.Objects;
+
 public class AboutController {
 
     @FXML
@@ -17,7 +19,7 @@ public class AboutController {
 
     @FXML
     public void initialize() {
-        Image logoImage = new Image(getClass().getResource("/com/dlraudio/ui/images/bk2306.png").toExternalForm());
+        Image logoImage = new Image(Objects.requireNonNull(getClass().getResource("/com/dlraudio/ui/images/bk2306.png")).toExternalForm());
         logoImageView.setImage(logoImage);
     }
 
